@@ -32,7 +32,10 @@ begin
       # This entire script is executed inside the Docker container.
       script = <<-SCRIPT
         set -e
-        echo "----> Installing Rust for #{platform}"
+        echo "----> Installing build dependencies for #{platform}"
+        sudo apt-get update -y && sudo apt-get install -y libclang-dev
+
+        echo "----> Installing Rust"
         curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 
         echo "----> Sourcing Rust environment"
