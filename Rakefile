@@ -33,17 +33,17 @@ begin
       script = <<-SCRIPT
         set -e
 
-        # For aarch64 cross-compilation, we need to add the ARM package repository
-        # before we can install the arm64 version of libclang.
+        # For aarch64 cross-compilation, we need to fully configure multi-arch apt.
         if [ "#{platform}" = "aarch64-linux" ]; then
           echo "----> Setting up multi-arch for aarch64-linux"
           sudo dpkg --add-architecture arm64
 
-          # Create a dedicated sources list for the arm64 architecture
-          # pointing to the correct ports repository for all components.
+          # Explicitly mark the default sources as amd64 only
+          sudo sed -i 's/^deb/deb [arch=amd64]/' /etc/apt/sources.list
+
+          # Add the arm64 ports repository
           echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports focal main restricted universe multiverse" | sudo tee /etc/apt/sources.list.d/arm64.list
           echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports focal-updates main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list.d/arm64.list
-          echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports focal-backports main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list.d/arm64.list
           echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports focal-security main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list.d/arm64.list
 
           sudo apt-get update -y
