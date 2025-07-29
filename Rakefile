@@ -32,8 +32,19 @@ begin
       # This entire script is executed inside the Docker container.
       script = <<-SCRIPT
         set -e
-        echo "----> Installing build dependencies for #{platform}"
-        sudo apt-get update -y && sudo apt-get install -y libclang-dev
+
+        # For aarch64 cross-compilation, we need to install the arm64 version of libclang.
+        # For other platforms, the native dev libs are sufficient.
+        if [ "#{platform}" = "aarch64-linux" ]; then
+          echo "----> Setting up multi-arch for aarch64-linux"
+          sudo dpkg --add-architecture arm64
+          sudo apt-get update -y
+          echo "----> Installing aarch64 build dependencies"
+          sudo apt-get install -y libclang-dev:arm64
+        else
+          echo "----> Installing build dependencies for #{platform}"
+          sudo apt-get update -y && sudo apt-get install -y libclang-dev
+        fi
 
         echo "----> Installing Rust"
         curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
