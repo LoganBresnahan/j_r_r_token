@@ -38,7 +38,14 @@ begin
         if [ "#{platform}" = "aarch64-linux" ]; then
           echo "----> Setting up multi-arch for aarch64-linux"
           sudo dpkg --add-architecture arm64
+
+          # Create a dedicated sources list for the arm64 architecture
+          # pointing to the correct ports repository for all components.
           echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports focal main restricted universe multiverse" | sudo tee /etc/apt/sources.list.d/arm64.list
+          echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports focal-updates main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list.d/arm64.list
+          echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports focal-backports main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list.d/arm64.list
+          echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports focal-security main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list.d/arm64.list
+
           sudo apt-get update -y
           echo "----> Installing aarch64 build dependencies"
           sudo apt-get install -y --no-install-recommends libclang-dev:arm64
