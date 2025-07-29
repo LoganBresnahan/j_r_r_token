@@ -13,10 +13,9 @@ Gem::Specification.new do |spec|
   spec.homepage = "https://github.com/LoganBresnahan/ru_token"
   spec.license = "GPL-3.0-or-later"
   spec.required_ruby_version = ">= 2.7.0"
-  spec.required_rubygems_version = ">= 3.3.11"
+  spec.required_rubygems_version = ">= 3.0.0"
 
   spec.metadata["allowed_push_host"] = "https://rubygems.org"
-
   spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = spec.homepage
   spec.metadata["changelog_uri"] = "#{spec.homepage}/blob/main/CHANGELOG.md"
