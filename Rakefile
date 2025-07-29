@@ -33,17 +33,18 @@ begin
       script = <<-SCRIPT
         set -e
 
-        # For aarch64 cross-compilation, we need to install the arm64 version of libclang.
-        # For other platforms, the native dev libs are sufficient.
+        # For aarch64 cross-compilation, we need to add the ARM package repository
+        # before we can install the arm64 version of libclang.
         if [ "#{platform}" = "aarch64-linux" ]; then
           echo "----> Setting up multi-arch for aarch64-linux"
           sudo dpkg --add-architecture arm64
+          echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports focal main restricted universe multiverse" | sudo tee /etc/apt/sources.list.d/arm64.list
           sudo apt-get update -y
           echo "----> Installing aarch64 build dependencies"
-          sudo apt-get install -y libclang-dev:arm64
+          sudo apt-get install -y --no-install-recommends libclang-dev:arm64
         else
           echo "----> Installing build dependencies for #{platform}"
-          sudo apt-get update -y && sudo apt-get install -y libclang-dev
+          sudo apt-get update -y && sudo apt-get install -y --no-install-recommends libclang-dev
         fi
 
         echo "----> Installing Rust"
