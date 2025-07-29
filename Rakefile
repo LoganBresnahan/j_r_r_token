@@ -29,8 +29,9 @@ begin
     ]
 
     platforms.each do |platform|
-      # This command now runs the build inside a bash subshell to ensure the PATH is set correctly for all commands.
-      command = "bash -c 'export PATH=\"$HOME/.cargo/bin:$PATH\" && bundle install && bundle exec rake compile:#{platform}'"
+      # This command now sets the PATH environment variable for the rake command itself,
+      # which is a more reliable way to ensure it's available to sub-processes like `make`.
+      command = "bundle install && PATH=\"$HOME/.cargo/bin:$PATH\" bundle exec rake compile:#{platform}"
       RakeCompilerDock.sh command, platform: platform
     end
   end
