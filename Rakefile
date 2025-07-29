@@ -3,7 +3,6 @@
 # This line ensures all gems from your Gemfile are loaded and available.
 require "bundler/setup"
 
-require "bundler/gem_tasks"
 require "rake/clean"
 require "rake/extensiontask"
 
