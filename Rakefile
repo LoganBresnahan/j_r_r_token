@@ -2,12 +2,15 @@
 
 # This line ensures all gems from your Gemfile are loaded and available.
 require "bundler/setup"
-
 require "rake/clean"
 require "rake/extensiontask"
 
+# Load the gemspec file to pass it to the extension task.
+# This is the standard practice and provides more context to rake-compiler.
+spec = Gem::Specification.load("ru_token.gemspec")
+
 # Define the extension task and store it in a variable.
-ext_task = Rake::ExtensionTask.new("ru_token") do |ext|
+ext_task = Rake::ExtensionTask.new("ru_token", spec) do |ext|
   ext.lib_dir = "lib/ru_token"
   ext.cross_compile = true
   ext.cross_platform = [
@@ -25,12 +28,24 @@ begin
 
   task "cross-compile" do
     ext_task.cross_platform.each do |platform|
-      # This command now does three things inside the container:
-      # 1. Installs the Rust toolchain non-interactively.
-      # 2. Sources the environment to add `cargo` to the PATH.
-      # 3. Runs the original build command.
-      command = "bash -c 'curl --proto \"=https\" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y && source \"$HOME/.cargo/env\" && bundle install && bundle exec rake native:#{platform}'"
-      RakeCompilerDock.sh command, platform: platform
+      # This uses a multi-line script (a "heredoc") for clarity and robustness.
+      # This entire script is executed inside the Docker container.
+      script = <<-SCRIPT
+        set -e
+        echo "----> Installing Rust for #{platform}"
+        curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+
+        echo "----> Sourcing Rust environment"
+        source "$HOME/.cargo/env"
+
+        echo "----> Installing gems"
+        bundle install
+
+        echo "----> Compiling native extension for #{platform}"
+        bundle exec rake native:#{platform}
+      SCRIPT
+
+      RakeCompilerDock.sh script, platform: platform
     end
   end
 rescue LoadError
