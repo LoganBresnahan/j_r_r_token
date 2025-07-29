@@ -18,20 +18,20 @@ begin
   require "rake_compiler_dock"
 
   # This is the main cross-compilation task for CI runners
-  # that use Docker (Linux and Windows).
+  # that use Docker.
   task "cross-compile" do
     platforms = [
       "x86_64-linux",
       "aarch64-linux",
-      "x64-mingw-ucrt",
-      "x64-mingw32",
+      "x64-mingw-ucrt", # For Ruby 3.1+ on Windows
+      "x64-mingw32",    # For Ruby 2.7-3.0 on Windows
       "x86_64-darwin"
     ]
 
     platforms.each do |platform|
-      # Use RakeCompilerDock.sh to run the compile task inside the container for each platform.
-      # This is the correct way to invoke the cross-compiler.
-      RakeCompilerDock.sh "bundle exec rake compile:#{platform}", platform: platform
+      # This command now runs `bundle install` inside the Docker container
+      # before compiling, which fixes the GemNotFound error.
+      RakeCompilerDock.sh "bundle install && bundle exec rake compile:#{platform}", platform: platform
     end
   end
 rescue LoadError
