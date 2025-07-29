@@ -7,9 +7,9 @@ require "bundler/gem_tasks"
 require "rake/clean"
 require "rake/extensiontask"
 
-# This is the main task definition for the extension.
-# It now includes the cross-compilation configuration directly.
-Rake::ExtensionTask.new("ru_token") do |ext|
+# Define the extension task and store it in a variable.
+# This is the standard way to configure a cross-compiled gem.
+ext_task = Rake::ExtensionTask.new("ru_token") do |ext|
   ext.lib_dir = "lib/ru_token"
 
   # Tell rake-compiler that this extension can be cross-compiled.
@@ -31,8 +31,8 @@ begin
 
   # This task will now run the cross-compilation using rake-compiler's built-in tasks.
   task "cross-compile" do
-    # The platforms are now read from the extension task definition above.
-    Rake::Task['ru_token'].cross_platform.each do |platform|
+    # Use the `ext_task` variable to access the list of platforms.
+    ext_task.cross_platform.each do |platform|
       # The command now runs the standard 'native' task provided by rake-compiler.
       # This is the documented and correct way to do this.
       RakeCompilerDock.sh "bundle install && bundle exec rake native:#{platform}", platform: platform
