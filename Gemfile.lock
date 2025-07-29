@@ -28,7 +28,13 @@ GEM
     rspec-support (3.13.4)
 
 PLATFORMS
+  aarch64-linux
+  arm64-darwin-22
+  arm64-darwin-23
   arm64-darwin-24
+  x64-mingw-ucrt
+  x86_64-darwin
+  x86_64-linux
 
 DEPENDENCIES
   bundler (>= 2.0)
