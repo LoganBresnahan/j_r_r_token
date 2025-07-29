@@ -31,7 +31,7 @@ begin
     platforms.each do |platform|
       # This command now runs `bundle install` inside the Docker container
       # before compiling, which fixes the GemNotFound error.
-      RakeCompilerDock.sh "bundle install && bundle exec rake compile:#{platform}", platform: platform
+      RakeCompilerDock.sh "source \"$HOME/.cargo/env\" && bundle install && bundle exec rake compile:#{platform}", platform: platform
     end
   end
 rescue LoadError
