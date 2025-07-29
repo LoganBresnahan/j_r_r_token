@@ -13,8 +13,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # We only need ubuntu and macos for the build jobs.
-        # The ubuntu runner will cross-compile for Windows.
         os: [ubuntu-latest, macos-latest]
         ruby: ['2.7', '3.0', '3.1', '3.2', '3.3']
 
@@ -27,7 +25,8 @@ jobs:
         ruby-version: ${{ matrix.ruby }}
         bundler-cache: true
 
-    - name: Set up Rust
+    - name: Set up Rust (for macOS native build)
+      if: runner.os == 'macOS'
       uses: dtolnay/rust-toolchain@stable
 
     - name: Compile native extension (macOS)
@@ -36,7 +35,8 @@ jobs:
 
     - name: Cross-compile extensions (Linux)
       if: runner.os == 'Linux'
-      # This one command builds for Linux and Windows targets
+      env:
+        RAKE_COMPILER_DOCK_IMAGE: ghcr.io/oxidize-rb/rake-compiler-dock-rust:latest
       run: bundle exec rake cross-compile
 
     - name: Upload compiled artifacts

@@ -7,32 +7,35 @@ require "bundler/gem_tasks"
 require "rake/clean"
 require "rake/extensiontask"
 
-# This is the task for local development and for CI runners
-# that build natively (like macOS).
+# This is the main task definition for the extension.
+# It now includes the cross-compilation configuration directly.
 Rake::ExtensionTask.new("ru_token") do |ext|
   ext.lib_dir = "lib/ru_token"
+
+  # Tell rake-compiler that this extension can be cross-compiled.
+  ext.cross_compile = true
+
+  # Define all the platforms you want to build for.
+  ext.cross_platform = [
+    "x86_64-linux",
+    "aarch64-linux",
+    "x64-mingw-ucrt",
+    "x64-mingw32",
+    "x86_64-darwin"
+  ]
 end
 
-# This block defines the cross-compilation tasks.
+# This block defines how to run the cross-compilation using rake-compiler-dock.
 begin
   require "rake_compiler_dock"
 
-  # This is the main cross-compilation task for CI runners
-  # that use Docker.
+  # This task will now run the cross-compilation using rake-compiler's built-in tasks.
   task "cross-compile" do
-    platforms = [
-      "x86_64-linux",
-      "aarch64-linux",
-      "x64-mingw-ucrt", # For Ruby 3.1+ on Windows
-      "x64-mingw32",    # For Ruby 2.7-3.0 on Windows
-      "x86_64-darwin"
-    ]
-
-    platforms.each do |platform|
-      # This command now sets the PATH environment variable for the rake command itself,
-      # which is a more reliable way to ensure it's available to sub-processes like `make`.
-      command = "bundle install && PATH=\"$HOME/.cargo/bin:$PATH\" bundle exec rake compile:#{platform}"
-      RakeCompilerDock.sh command, platform: platform
+    # The platforms are now read from the extension task definition above.
+    Rake::Task['ru_token'].cross_platform.each do |platform|
+      # The command now runs the standard 'native' task provided by rake-compiler.
+      # This is the documented and correct way to do this.
+      RakeCompilerDock.sh "bundle install && bundle exec rake native:#{platform}", platform: platform
     end
   end
 rescue LoadError
@@ -40,11 +43,6 @@ rescue LoadError
   puts "rake-compiler-dock not installed. Cross-compilation tasks will not be available."
 end
 
-
-# This helper task is used by rake-compiler-dock.
-task :native do
-  Rake::Task["compile:ru_token"].invoke
-end
-
 # The default task remains a standard local compile.
+# 'compile' is an alias for 'compile:local', which is the native build.
 task default: %w[compile]
