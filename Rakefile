@@ -29,9 +29,9 @@ begin
     ]
 
     platforms.each do |platform|
-      # This command now explicitly adds the standard cargo bin directory to the PATH,
-      # which is more reliable than sourcing an environment file.
-      RakeCompilerDock.sh "export PATH=\"$HOME/.cargo/bin:$PATH\" && bundle install && bundle exec rake compile:#{platform}", platform: platform
+      # This command now runs the build inside a bash subshell to ensure the PATH is set correctly for all commands.
+      command = "bash -c 'export PATH=\"$HOME/.cargo/bin:$PATH\" && bundle install && bundle exec rake compile:#{platform}'"
+      RakeCompilerDock.sh command, platform: platform
     end
   end
 rescue LoadError
