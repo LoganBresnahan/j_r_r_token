@@ -14,9 +14,9 @@ ext_task = Rake::ExtensionTask.new("ru_token", spec) do |ext|
   ext.cross_compile = true
   ext.cross_platform = [
     "x86_64-linux",
-    # "aarch64-linux", # Temporarily disabled to fix other builds first
-    "x64-mingw-ucrt",
-    "x64-mingw32",
+    # "aarch64-linux",   # Temporarily disabled
+    # "x64-mingw-ucrt",  # Temporarily disabled
+    # "x64-mingw32",     # Temporarily disabled
     "x86_64-darwin"
   ]
 end
@@ -31,7 +31,7 @@ begin
         set -e
         echo "----> Installing build dependencies for #{platform}"
         # For all platforms, we need libclang-dev for the rb-sys gem.
-        sudo apt-get update -y && sudo apt-get install -y --no-install-recommends libclang-dev
+        sudo apt-get update -y && sudo apt-get install -y --no-install-recommends build-essential libclang-dev
 
         echo "----> Installing Rust"
         curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
@@ -43,13 +43,6 @@ begin
         bundle install
 
         echo "----> Compiling native extension for #{platform}"
-
-        # For Windows targets, we need to tell the build system where to find
-        # the mingw headers that are pre-installed in the Docker image.
-        if [[ "#{platform}" == *"mingw"* ]]; then
-          export BINDGEN_EXTRA_CLANG_ARGS="-I/usr/x86_64-w64-mingw32/include"
-        fi
-
         bundle exec rake native:#{platform}
       SCRIPT
 
