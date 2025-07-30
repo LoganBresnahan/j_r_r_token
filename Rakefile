@@ -48,10 +48,10 @@ begin
 
           sudo apt-get update -y
           echo "----> Installing aarch64 build dependencies"
-          # This is the fix: Install the specific versioned libclang package and its dev package.
-          sudo apt-get install -y --no-install-recommends libclang-10:arm64 libclang-10-dev:arm64
+          # This ensures the required libclang.so file is present.
+          sudo apt-get install -y --no-install-recommends clang:arm64
 
-          # Tell the build process and the linker where to find the arm64 libclang.
+          # Set the environment variables to help the build find the library.
           export LIBCLANG_PATH=/usr/lib/aarch64-linux-gnu/
           export LD_LIBRARY_PATH=/usr/lib/aarch64-linux-gnu/:$LD_LIBRARY_PATH
         else
