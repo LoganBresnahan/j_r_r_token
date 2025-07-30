@@ -6,7 +6,6 @@ require "rake/clean"
 require "rake/extensiontask"
 
 # Load the gemspec file to pass it to the extension task.
-# This is the standard practice and provides more context to rake-compiler.
 spec = Gem::Specification.load("ru_token.gemspec")
 
 # Define the extension task and store it in a variable.
@@ -15,7 +14,7 @@ ext_task = Rake::ExtensionTask.new("ru_token", spec) do |ext|
   ext.cross_compile = true
   ext.cross_platform = [
     "x86_64-linux",
-    "aarch64-linux",
+    # "aarch64-linux", # Temporarily disabled to fix other builds first
     "x64-mingw-ucrt",
     "x64-mingw32",
     "x86_64-darwin"
@@ -28,14 +27,11 @@ begin
 
   task "cross-compile" do
     ext_task.cross_platform.each do |platform|
-      # This uses a multi-line script (a "heredoc") for clarity and robustness.
-      # This entire script is executed inside the Docker container.
       script = <<-SCRIPT
         set -e
-
         echo "----> Installing build dependencies for #{platform}"
-        # Install clang, which can be used as a cross-compiler
-        sudo apt-get update -y && sudo apt-get install -y --no-install-recommends clang libclang-dev
+        # build-essential contains the necessary compilers (gcc, g++, etc.)
+        sudo apt-get update -y && sudo apt-get install -y --no-install-recommends build-essential
 
         echo "----> Installing Rust"
         curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
@@ -47,13 +43,6 @@ begin
         bundle install
 
         echo "----> Compiling native extension for #{platform}"
-
-        # For aarch64, we need to tell cargo to use clang as the linker.
-        if [ "#{platform}" = "aarch64-linux" ]; then
-          export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=clang
-          export CC_aarch64_unknown_linux_gnu=clang
-        fi
-
         bundle exec rake native:#{platform}
       SCRIPT
 
