@@ -1,0 +1,9 @@
+# This file tells Rust's build system (Cargo) how to cross-compile.
+
+# Configuration for the aarch64-linux target
+[target.aarch64-unknown-linux-gnu]
+linker = "aarch64-linux-gnu-gcc"
+
+# Configuration for the x86_64-linux target
+[target.x86_64-unknown-linux-gnu]
+linker = "gcc"
