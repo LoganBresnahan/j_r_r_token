@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ---
+## [0.1.5] - 2025-07-30
+### Changed
+- Update Deploy Process for PKG gem names.
+
+---
 ## [0.1.4] - 2025-07-30
 ### Changed
 - Removed test runners from release process.
