@@ -12,38 +12,13 @@ Extensive Model Support: Includes tokenizers for all modern and legacy OpenAI mo
 
 Pre-compiled: Ships with binaries for major platforms (Linux, macOS, Windows) and Ruby versions, removing the need for local compilation in production.
 
-Installation
-Add this line to your application's Gemfile:
-
-Ruby
-
-gem 'ru_token'
-And then execute:
-
-Bash
-
-$ bundle install
-Or install it yourself as:
-
-Bash
-
-$ gem install ru_token
-Usage
-The primary interface is the RuToken::Tokenizer.count method. The model keyword argument is required.
-
-Ruby
-
-require 'ru_token'
-
-text = "RuToken is a fast and simple way to count tokens."
-
-## Count tokens for a specific model (the `model` keyword is required)
-count = RuToken::Tokenizer.count(text, model: "gpt-4o")
-### => 13
+## Count tokens for a specific model (the model keyword is required)
+`count = RuToken::Tokenizer.count(text, model: "gpt-4o")`
+#### => 13
 
 ## The gem recognizes many aliases, including older models
-count = RuToken::Tokenizer.count(text, model: "text-davinci-003")
-### => 13
+`count = RuToken::Tokenizer.count(text, model: "text-davinci-003")`
+#### => 13
 If you provide an unsupported model name, the gem will raise an ArgumentError.
 
 Supported Models
@@ -60,7 +35,9 @@ After checking out the repo, set up your environment:
 Bash
 
 ## Install Ruby and Rust dependencies
-bundle install
+Ruby >= 2.7 required
+
+`bundle install`
 
 ## Compile the Rust extension and run tests
 bundle exec rake
