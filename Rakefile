@@ -33,31 +33,9 @@ begin
       script = <<-SCRIPT
         set -e
 
-        # For aarch64 cross-compilation, we need to fully configure multi-arch apt.
-        if [ "#{platform}" = "aarch64-linux" ]; then
-          echo "----> Setting up multi-arch for aarch64-linux"
-          sudo dpkg --add-architecture arm64
-
-          # Explicitly mark the default sources as amd64 only
-          sudo sed -i 's/^deb/deb [arch=amd64]/' /etc/apt/sources.list
-
-          # Add the arm64 ports repository
-          echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports focal main restricted universe multiverse" | sudo tee /etc/apt/sources.list.d/arm64.list
-          echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports focal-updates main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list.d/arm64.list
-          echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports focal-security main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list.d/arm64.list
-
-          sudo apt-get update -y
-          echo "----> Installing aarch64 build dependencies"
-          # This ensures the required libclang.so file is present.
-          sudo apt-get install -y --no-install-recommends clang:arm64
-
-          # Set the environment variables to help the build find the library.
-          export LIBCLANG_PATH=/usr/lib/aarch64-linux-gnu/
-          export LD_LIBRARY_PATH=/usr/lib/aarch64-linux-gnu/:$LD_LIBRARY_PATH
-        else
-          echo "----> Installing build dependencies for #{platform}"
-          sudo apt-get update -y && sudo apt-get install -y --no-install-recommends libclang-dev
-        fi
+        echo "----> Installing build dependencies for #{platform}"
+        # Install clang, which can be used as a cross-compiler
+        sudo apt-get update -y && sudo apt-get install -y --no-install-recommends clang libclang-dev
 
         echo "----> Installing Rust"
         curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
@@ -69,6 +47,13 @@ begin
         bundle install
 
         echo "----> Compiling native extension for #{platform}"
+
+        # For aarch64, we need to tell cargo to use clang as the linker.
+        if [ "#{platform}" = "aarch64-linux" ]; then
+          export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=clang
+          export CC_aarch64_unknown_linux_gnu=clang
+        fi
+
         bundle exec rake native:#{platform}
       SCRIPT
 
