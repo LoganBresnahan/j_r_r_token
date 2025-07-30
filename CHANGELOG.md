@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ---
+## [0.1.7] - 2025-07-30
+### Changed
+- Add Generic Gem Build.
+
+---
 ## [0.1.6] - 2025-07-30
 ### Changed
 - Change build process to rely on Oxidize.

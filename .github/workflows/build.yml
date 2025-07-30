@@ -44,6 +44,29 @@ jobs:
           stable-ruby-versions: |
             exclude: [head]
 
+  # Build and publish generic ruby gem (fallback)
+  ruby-gem:
+    name: Build and publish generic ruby gem
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+      - name: Build gem
+        run: gem build *.gemspec
+      - name: Publish to RubyGems
+        env:
+          RUBYGEMS_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
+        run: |
+          mkdir -p $HOME/.gem
+          echo ":rubygems_api_key: $RUBYGEMS_API_KEY" > $HOME/.gem/credentials
+          chmod 0600 $HOME/.gem/credentials
+          gem push *.gem
+
   cross-gem:
     name: Compile native gem for ${{ matrix.platform }}
     if: github.event_name == 'release'
