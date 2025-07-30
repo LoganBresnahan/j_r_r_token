@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ---
+## [0.1.3] - 2025-07-30
+### Changed
+- Update release process to properly pre-compile native gems.
+
+---
 ## [0.1.2] - 2025-07-30
 
 ### Changed
