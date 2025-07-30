@@ -13,7 +13,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        # We use a native runner for each target OS.
+        # macos-13 is an Intel Mac, macos-latest is an Apple Silicon Mac.
+        os: [ubuntu-latest, windows-latest, macos-13, macos-latest]
         ruby: ['2.7', '3.0', '3.1', '3.2', '3.3']
 
     steps:
@@ -25,23 +27,18 @@ jobs:
         ruby-version: ${{ matrix.ruby }}
         bundler-cache: true
 
-    # The Rust toolchain is only needed for the native macOS build.
-    # For the Linux cross-compile, Rust is installed inside the Docker container by the Rakefile.
-    - name: Set up Rust (for macOS native build)
-      if: runner.os == 'macOS'
+    - name: Set up Rust
       uses: dtolnay/rust-toolchain@stable
 
-    - name: Compile native extension (macOS)
-      if: runner.os == 'macOS'
+    # This single step runs on all operating systems.
+    # It will perform a native compile on each runner.
+    - name: Compile native extension
       run: bundle exec rake compile
-
-    - name: Cross-compile extensions (Linux)
-      if: runner.os == 'Linux'
-      run: bundle exec rake cross-compile
 
     - name: Upload compiled artifacts
       uses: actions/upload-artifact@v4
       with:
+        # Create a unique artifact name for each job
         name: ru_token-${{ runner.os }}-${{ matrix.ruby }}
         path: |
           lib/ru_token/**/*.so

@@ -41,7 +41,6 @@ DEPENDENCIES
   bundler (>= 2.0)
   rake (~> 13.0)
   rake-compiler
-  rake-compiler-dock
   rb_sys (~> 0.9.63)
   rspec (~> 3.0)
   ru_token!
