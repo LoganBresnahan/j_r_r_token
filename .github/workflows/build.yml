@@ -27,52 +27,42 @@ jobs:
         with:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
-      - name: Compile and run tests
+      - name: Build and test
         run: bundle exec rake
 
-  # test-musl:
-  #   if: github.event_name != 'release'
-  #   name: Test on Alpine (MUSL) / Ruby ${{ matrix.ruby }}
-  #   runs-on: ubuntu-latest
-  #   strategy:
-  #     fail-fast: false
-  #     matrix:
-  #       ruby: ['2.7', '3.0', '3.1', '3.2', '3.3']
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - name: Set up Ruby
-  #       uses: ruby/setup-ruby@v1
-  #       with:
-  #         ruby-version: ${{ matrix.ruby }}
-  #     - name: Install rake-compiler-dock
-  #       run: gem install rake-compiler-dock
-  #     - name: Run MUSL test suite
-  #       run: rcd --ruby-image=ruby:${{ matrix.ruby }}-alpine -- rubygem-test
-
-  publish-linux:
-    name: Publish for Linux (${{ matrix.platform }})
+  ci-data:
     if: github.event_name == 'release'
     runs-on: ubuntu-latest
+    outputs:
+      result: ${{ steps.fetch.outputs.result }}
+    steps:
+      - uses: oxidize-rb/actions/fetch-ci-data@main
+        id: fetch
+        with:
+          supported-ruby-platforms: |
+            exclude: ['x64-mingw32', 'x64-mingw-ucrt']
+          stable-ruby-versions: |
+            exclude: [head]
+
+  cross-gem:
+    name: Compile native gem for ${{ matrix.platform }}
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    needs: ci-data
     strategy:
-      fail-fast: false
       matrix:
-        platform:
-          - x86_64-linux
-          - aarch64-linux
-          - x86_64-linux-musl
-          - aarch64-linux-musl
+        platform: ${{ fromJSON(needs.ci-data.outputs.result).supported-ruby-platforms }}
     steps:
       - uses: actions/checkout@v4
       - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.3'
+          ruby-version: "3.3"
           bundler-cache: true
-      - name: Build cross-compiled gem
-        uses: oxidize-rb/actions/cross-gem@v1
+      - uses: oxidize-rb/actions/cross-gem@v1
         id: cross-gem
         with:
           platform: ${{ matrix.platform }}
-          ruby-versions: "2.7,3.0,3.1,3.2,3.3"
+          ruby-versions: ${{ join(fromJSON(needs.ci-data.outputs.result).stable-ruby-versions, ',') }}
       - name: Publish to RubyGems
         env:
           RUBYGEMS_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
@@ -81,33 +71,3 @@ jobs:
           echo ":rubygems_api_key: $RUBYGEMS_API_KEY" > $HOME/.gem/credentials
           chmod 0600 $HOME/.gem/credentials
           gem push ${{ steps.cross-gem.outputs.gem-path }}
-
-  publish-macos:
-    name: Publish for macOS (${{ matrix.os.name }})
-    if: github.event_name == 'release'
-    runs-on: ${{ matrix.os.label }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os:
-          - { name: 'x86_64 (Intel)', label: 'macos-13' }
-          - { name: 'ARM64 (Apple Silicon)', label: 'macos-latest' }
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Rust
-        uses: dtolnay/rust-toolchain@stable
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: '2.7'
-          bundler-cache: true
-      - name: Build platform-specific Gem
-        run: bundle exec rake build
-      - name: Publish to RubyGems
-        env:
-          RUBYGEMS_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
-        run: |
-          mkdir -p $HOME/.gem
-          echo ":rubygems_api_key: $RUBYGEMS_API_KEY" > $HOME/.gem/credentials
-          chmod 0600 $HOME/.gem/credentials
-          gem push pkg/*.gem
