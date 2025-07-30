@@ -17,7 +17,7 @@ ext_task = Rake::ExtensionTask.new("ru_token", spec) do |ext|
     # "aarch64-linux",   # Temporarily disabled
     # "x64-mingw-ucrt",  # Temporarily disabled
     # "x64-mingw32",     # Temporarily disabled
-    "x86_64-darwin"
+    # "x86_64-darwin"
   ]
 end
 
