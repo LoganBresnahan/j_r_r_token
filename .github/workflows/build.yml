@@ -54,7 +54,6 @@ jobs:
   publish-linux:
     name: Publish for Linux (${{ matrix.platform }})
     if: github.event_name == 'release'
-    needs: [test]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -88,7 +87,6 @@ jobs:
   publish-macos:
     name: Publish for macOS (${{ matrix.os.name }})
     if: github.event_name == 'release'
-    needs: [test]
     runs-on: ${{ matrix.os.label }}
     strategy:
       fail-fast: false
