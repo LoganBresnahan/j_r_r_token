@@ -30,15 +30,7 @@ begin
       script = <<-SCRIPT
         set -e
         echo "----> Installing build dependencies for #{platform}"
-
-        # Install the correct dependencies based on the target platform.
-        if [[ "#{platform}" == *"mingw"* ]]; then
-          # For Windows targets, install the mingw-w64 cross-compiler toolchain.
-          sudo apt-get update -y && sudo apt-get install -y --no-install-recommends mingw-w64
-        else
-          # For Linux targets, install build-essential and libclang.
-          sudo apt-get update -y && sudo apt-get install -y --no-install-recommends build-essential libclang-dev
-        fi
+        sudo apt-get update -y && sudo apt-get install -y --no-install-recommends build-essential libclang-dev
 
         echo "----> Installing Rust"
         curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
