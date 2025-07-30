@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    ru_token (0.1.1)
+    ru_token (0.1.2)
 
 GEM
   remote: https://rubygems.org/
@@ -29,6 +29,7 @@ GEM
 
 PLATFORMS
   aarch64-linux
+  aarch64-linux-musl
   arm64-darwin-22
   arm64-darwin-23
   arm64-darwin-24
@@ -36,6 +37,7 @@ PLATFORMS
   x64-mingw32
   x86_64-darwin
   x86_64-linux
+  x86_64-linux-musl
 
 DEPENDENCIES
   bundler (>= 2.0)

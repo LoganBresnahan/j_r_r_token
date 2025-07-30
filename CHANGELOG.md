@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ---
+## [0.1.2] - 2025-07-30
+
+### Changed
+- Revamped the Linux publishing workflow to use the `oxidize-rb/actions/cross-gem` action. This produces highly portable "fat" gems for Linux, resulting in several key improvements:
+  - Pre-compiled gems are now provided for both `glibc` (standard Linux) and `musl` (Alpine Linux) systems.
+  - Both Intel (`x86_64`) and ARM (`aarch64`) architectures are now supported for both `glibc` and `musl`.
+  - Linux gems are now compatible with a much wider range of distributions, including older enterprise versions.
+
+---
 ## [0.1.1] - 2025-07-30
 
 ### Added
