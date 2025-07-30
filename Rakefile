@@ -1,19 +1,21 @@
 # frozen_string_literal: true
 
-# This line ensures all gems from your Gemfile are loaded and available.
 require "bundler/setup"
 require "rake/clean"
 require "rake/extensiontask"
+require "rspec/core/rake_task"
 
-# Load the gemspec file to pass it to the extension task.
-# This is the standard practice and provides more context to rake-compiler.
 spec = Gem::Specification.load("ru_token.gemspec")
 
-# This is the only task needed now. It defines how to compile the
-# native extension on whatever machine is currently running the build.
 Rake::ExtensionTask.new("ru_token", spec) do |ext|
   ext.lib_dir = "lib/ru_token"
 end
 
-# The default task remains a standard local compile.
-task default: %w[compile]
+# Define a task to run your specs
+RSpec::Core::RakeTask.new(:spec)
+
+# Make the 'spec' task depend on the 'compile' task
+task spec: :compile
+
+# Set the default task to run specs
+task default: :spec
