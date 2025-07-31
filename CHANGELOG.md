@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ---
+## [0.1.18] - 2025-07-31
+### Change
+- Update README
+
+---
 ## [0.1.17] - 2025-07-31
 ### Change
 - Update gemspec license entry
