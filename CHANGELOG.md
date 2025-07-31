@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ---
+## [0.1.10] - 2025-07-31
+### Fix
+- Add stable ruby versions to ci data step in build.
+
+---
 ## [0.1.9] - 2025-07-31
 ### Fix
 - Add required ruby version to build and deploy.
