@@ -59,8 +59,10 @@ Both:
 
 You can open an interactive console for experimentation with bin/console.
 
-Contributing
+## Contributing
+
 Bug reports and pull requests are welcome on GitHub at https://github.com/LoganBresnahan/ru_token.
 
-License
+## License
+
 The gem is available as open source under the terms of the MIT License.
