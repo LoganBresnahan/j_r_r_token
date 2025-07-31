@@ -86,6 +86,7 @@ jobs:
         with:
           platform: ${{ matrix.platform }}
           ruby-versions: ${{ join(fromJSON(needs.ci-data.outputs.result).stable-ruby-versions, ',') }}
+          required-ruby-version: '>= 2.7.0'
       - name: Publish to RubyGems
         env:
           RUBYGEMS_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
