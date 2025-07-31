@@ -41,7 +41,13 @@ jobs:
         with:
           supported-ruby-platforms: |
             exclude: ['x64-mingw32', 'x64-mingw-ucrt']
-          stable-ruby-versions: '2.7,3.0,3.1,3.2,3.3,3.4'
+          stable-ruby-versions: |
+            - '2.7'
+            - '3.0'
+            - '3.1'
+            - '3.2'
+            - '3.3'
+            - '3.4'
 
   # Build and publish generic ruby gem (fallback)
   ruby-gem:

@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ---
+## [0.1.13] - 2025-07-31
+### Fix
+- Stable ruby version build syntax
+
+---
 ## [0.1.12] - 2025-07-31
 ### Fix
 - Set stable ruby versions manually.
