@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ---
+## [0.1.19] - 2025-07-31
+### No Change
+- Bumping to retry RubyGems deploy
+
+---
 ## [0.1.18] - 2025-07-31
 ### Change
 - Update README
