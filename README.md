@@ -41,7 +41,9 @@ The gem automatically maps dozens of model names and prefixes to the correct und
 ## Developing RuToken Locally
 
 ### Install Ruby and Rust dependencies
-Ruby >= 2.7 required
+Ruby >= 2.7.0
+
+RubyGems >= 3.0.0
 
 Rust edtion 2021
 

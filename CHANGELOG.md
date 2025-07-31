@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ---
+## [0.1.17] - 2025-07-31
+### Change
+- Update gemspec license entry
+- Remove platform x64-mingw-ucrt from Gemfile.lock
+
+---
 ## [0.1.16] - 2025-07-31
 ### Change
 - Update license to MIT

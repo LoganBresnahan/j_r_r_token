@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
   spec.summary = "Ruby wrapper for the tiktoken Rust library, providing fast tokenization for OpenAI models."
   spec.description = "RuToken is a Ruby gem that wraps the tiktoken Rust library, enabling fast and efficient tokenization for OpenAI models. It supports multiple models including o200k_base, cl100k_base, p50k_base, and r50k_base."
   spec.homepage = "https://github.com/LoganBresnahan/ru_token"
-  spec.license = "GPL-3.0-or-later"
+  spec.license = "MIT"
   spec.required_ruby_version = ">= 2.7.0"
   spec.required_rubygems_version = ">= 3.0.0"
 
