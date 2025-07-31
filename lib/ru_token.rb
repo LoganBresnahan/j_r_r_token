@@ -3,9 +3,14 @@
 require_relative "ru_token/version"
 
 begin
-  require "ru_token/ru_token"
+  ruby_version = RUBY_VERSION.split('.')[0..1].join('.')
+  require "ru_token/#{ruby_version}/ru_token"
 rescue LoadError
-  warn "Failed to load ru_token native extension."
+  begin
+    require "ru_token/ru_token"
+  rescue LoadError
+    warn "Failed to load ru_token native extension."
+  end
 end
 
 module RuToken
