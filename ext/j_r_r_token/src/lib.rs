@@ -31,12 +31,14 @@ fn get_bpe_from_model(model: &str) -> Result<CoreBPE, Error> {
                 "o1-", "o3-", "o4-", "gpt-4.1-", "chatgpt-4o-", "gpt-4o-", "ft:gpt-40"
             ];
 
+            let cl100k_prefixes = [
+                "gpt-4-", "gpt-3.5-turbo-", "gpt-35-turbo-", "ft:gpt-4",
+                "ft:gpt-3.5-turbo", "ft:davinci-002", "ft:babbage-002",
+            ];
+
             if o200k_prefixes.iter().any(|prefix| model.starts_with(prefix)) {
                 o200k_base()
-            } else if model.starts_with("gpt-4-") || model.starts_with("gpt-3.5-turbo-")
-            || model.starts_with("gpt-35-turbo-") || model.starts_with("ft:gpt-4")
-            || model.starts_with("ft:gpt-3.5-turbo") || model.starts_with("ft:davinci-002")
-            || model.starts_with("ft:babbage-002") {
+            } else if cl100k_prefixes.iter().any(|prefix| model.starts_with(prefix)) {
                 cl100k_base()
             } else {
                 let err_msg = format!("Model '{}' not supported.", model);
