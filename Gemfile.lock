@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    j_r_r_token (1.0.1)
+    j_r_r_token (1.0.2)
 
 GEM
   remote: https://rubygems.org/
