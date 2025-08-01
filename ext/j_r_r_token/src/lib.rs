@@ -32,9 +32,10 @@ fn get_bpe_from_model(model: &str) -> Result<CoreBPE, Error> {
             || model.starts_with("gpt-4o-") || model.starts_with("ft:gpt-4o") {
                 o200k_base()
             } else if model.starts_with("gpt-4-") || model.starts_with("gpt-3.5-turbo-")
-            || model.starts_with("gpt-35-turbo-") || model.starts_with("ft:gpt-4")
-            || model.starts_with("ft:gpt-3.5-turbo") || model.starts_with("ft:davinci-002")
-            || model.starts_with("ft:babbage-002") {
+            || model.starts_with("gpt-35-turbo-") || model.starts_with("ft:gpt-4:")
+            || model.starts_with("ft:gpt-4-") || model.starts_with("ft:gpt-3.5-turbo")
+            || model.starts_with("ft:davinci-002") || model.starts_with("ft:babbage-002")
+            || model == "ft:gpt-4" {
                 cl100k_base()
             } else {
                 let err_msg = format!("Model '{}' not supported.", model);

@@ -27,6 +27,7 @@ RSpec.describe JRRToken do
         "gpt-4o-2024-05-13",
         "ft:gpt-4o-abcdef",
         "ft:gpt-4o",
+        "ft:gpt-4o:org:model:123",
         "o1-preview", "o3-mini"
       ]
 
@@ -49,7 +50,7 @@ RSpec.describe JRRToken do
       models = [
         "cl100k_base", "gpt-4", "gpt-3.5-turbo", "text-embedding-ada-002",
         "gpt-4-32k-0613", "gpt-3.5-turbo-instruct",
-        "ft:gpt-3.5-turbo-xyz", "ft:gpt-4:custom"
+        "ft:gpt-3.5-turbo-xyz", "ft:gpt-4:org:model:123", "ft:gpt-4-turbo"
       ]
 
       it_verifies_token_count(
@@ -93,10 +94,18 @@ RSpec.describe JRRToken do
 
       it "uses cl100k_base for ft:gpt-4 models" do
         cl100k_count = JRRToken::Tokenizer.count(COMPLEX_TEXT, model: "gpt-4")
-        ft_4_count = JRRToken::Tokenizer.count(COMPLEX_TEXT, model: "ft:gpt-4:custom")
+        ft_4_count = JRRToken::Tokenizer.count(COMPLEX_TEXT, model: "ft:gpt-4:org:model:123")
 
         expect(ft_4_count).to eq(cl100k_count),
           "ft:gpt-4 should use same tokenizer as gpt-4 (cl100k_base)"
+      end
+
+      it "distinguishes between ft:gpt-4 and ft:gpt-4o models" do
+        ft_4_count = JRRToken::Tokenizer.count(COMPLEX_TEXT, model: "ft:gpt-4:org:model:123")
+        ft_4o_count = JRRToken::Tokenizer.count(COMPLEX_TEXT, model: "ft:gpt-4o:org:model:123")
+
+        expect(ft_4_count).not_to eq(ft_4o_count),
+          "ft:gpt-4 and ft:gpt-4o should use different tokenizers"
       end
     end
 
