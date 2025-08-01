@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
   spec.email = ["loganbbres@gmail.com"]
 
   spec.summary = "Ruby wrapper for the tiktoken Rust library, providing fast tokenization for OpenAI models."
-  spec.description = "JRRToken is a Ruby gem that wraps the tiktoken Rust library, enabling fast and efficient tokenization for OpenAI models. It supports multiple models including o200k_base, cl100k_base, p50k_base, and r50k_base."
+  spec.description = "JRRToken is a Ruby gem that wraps the tiktoken Rust library, enabling fast and efficient tokenization for OpenAI models. It supports multiple models including o200k_base, cl100k_base, p50k_base, p50k_edit, and r50k_base."
   spec.homepage = "https://github.com/LoganBresnahan/j_r_r_token"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 2.7.0"

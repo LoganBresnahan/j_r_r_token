@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ---
+## [1.0.0] - 2025-08-01
+### Breaking Change
+- Rename Gem from ru_token (RuToken) to j_r_r_token (JRRToken).
+- The ru_token gem will be patched with a deprecation notice.
+- Bumping the version to 1.0.0 to symbolize the gem is now in a stable state.
+
+---
 ## [0.1.20] - 2025-07-31
 ### Change
 - Remove x64-mingw32 from Gemfile.lock
