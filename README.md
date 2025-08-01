@@ -1,16 +1,24 @@
-# RuToken 🦕
+# RuToken [🦕](https://youtu.be/0MX31NTNrho?si=NgLE4-UL3zgiUVd7)
+
 RuToken provides a high-performance, native Ruby interface for counting tokens using the powerful [tiktoken-rs](https://github.com/zurawiki/tiktoken-rs) library. It leverages the speed of Rust to offer a fast and efficient way to calculate token counts for various OpenAI models.
 
 The gem ships with pre-compiled native extensions for Linux and macOS, so your end-users don't need a Rust toolchain installed.
 
 Supports Ruby >= 2.7.0
 
-Features
-High Performance ⚡️: Uses a native Rust implementation for blazing-fast tokenization.
-
-Simple API: A clean and straightforward interface for counting tokens.
-
 Extensive Model Support: Includes tokenizers for all modern and legacy OpenAI models, recognizing dozens of model aliases automatically.
+
+[https://rubygems.org/gems/ru_token](https://rubygems.org/gems/ru_token)
+
+## Install
+
+#### Gemfile
+`gem 'ru_token', '~> 0.1.20'`
+
+#### Command Line
+`gem install ru_token -v '~> 0.1.20'`
+
+## Use
 
 ### Count tokens for a specific model (the model keyword is required)
 ```Ruby
@@ -19,7 +27,7 @@ count = RuToken::Tokenizer.count("hello world!", model: "gpt-4.1")
 
 ### The gem recognizes many aliases, including older models
 ```Ruby
-count = RuToken::Tokenizer.count(1234, model: "text-davinci-003")
+count = RuToken::Tokenizer.count("hello world!", model: "text-davinci-003")
 ```
 
 ### The count method calls .to_s on the argument if it is not a string
@@ -57,7 +65,7 @@ Specs:
 Both:
 `bundle exec rake`
 
-You can open an interactive console for experimentation with bin/console.
+Interactive console for experimentation: `bin/console`
 
 ## Contributing
 
