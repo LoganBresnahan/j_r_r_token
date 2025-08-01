@@ -1,4 +1,4 @@
-# JRRToken [<img src="ring.png" width="32px" alt="One ring to rule them all, one ring to find them, One ring to bring them all and in the darkness bind them.">](https://youtu.be/lemgdzLDYqA?si=Z_Ls3hbJ-Xv38oJN)
+# JRRToken [<img src="https://github.com/LoganBresnahan/j_r_r_token/raw/main/.github/assets/ring.png" width="32px" alt="One ring to rule them all, one ring to find them, One ring to bring them all and in the darkness bind them.">](https://www.youtube.com/watch?v=lemgdzLDYqA)
 
 (Just Ruby Rust Tokens)
 
@@ -15,10 +15,10 @@ Extensive Model Support: Includes tokenizers for all modern and legacy OpenAI mo
 ## Install
 
 #### Gemfile
-`gem 'j_r_r_token', '~> 1.0.0'`
+`gem 'j_r_r_token', '~> 1.0'`
 
 #### Command Line
-`gem install j_r_r_token -v '~> 1.0.0'`
+`gem install j_r_r_token -v '~> 1.0'`
 
 ## Use
 

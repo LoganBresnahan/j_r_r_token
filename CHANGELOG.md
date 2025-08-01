@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ---
+## [1.0.1] - 2025-08-01
+### Change
+- Slim down gem by removing unnecessary files defined in the gemspec.
+
+---
 ## [1.0.0] - 2025-08-01
 ### Breaking Change
 - Rename Gem from ru_token (RuToken) to j_r_r_token (JRRToken).
