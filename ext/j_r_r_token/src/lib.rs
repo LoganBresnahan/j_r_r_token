@@ -27,9 +27,11 @@ fn get_bpe_from_model(model: &str) -> Result<CoreBPE, Error> {
         "p50k_edit" | "text-davinci-edit-001" | "code-davinci-edit-001" => p50k_edit(),
         // --- Fallback for Prefixes ---
         _ => {
-            if model.starts_with("o1-") || model.starts_with("o3-") || model.starts_with("o4-")
-            || model.starts_with("gpt-4.1-") || model.starts_with("chatgpt-4o-")
-            || model.starts_with("gpt-4o-") || model.starts_with("ft:gpt-4o") {
+            let o200k_prefixes = [
+                "o1-", "o3-", "o4-", "gpt-4.1-", "chatgpt-4o-", "gpt-4o-", "ft:gpt-40"
+            ];
+
+            if o200k_prefixes.iter().any(|prefix| model.starts_with(prefix)) {
                 o200k_base()
             } else if model.starts_with("gpt-4-") || model.starts_with("gpt-3.5-turbo-")
             || model.starts_with("gpt-35-turbo-") || model.starts_with("ft:gpt-4")
