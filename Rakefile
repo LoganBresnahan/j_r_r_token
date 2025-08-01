@@ -4,10 +4,10 @@ require "bundler/gem_tasks"
 require "rake/extensiontask"
 require "rb_sys/extensiontask"
 
-GEMSPEC = Gem::Specification.load("ru_token.gemspec")
+GEMSPEC = Gem::Specification.load("j_r_r_token.gemspec")
 
-RbSys::ExtensionTask.new("ru_token", GEMSPEC) do |ext|
-  ext.lib_dir = "lib/ru_token"
+RbSys::ExtensionTask.new("j_r_r_token", GEMSPEC) do |ext|
+  ext.lib_dir = "lib/j_r_r_token"
 end
 
 # Only require rspec if it's available

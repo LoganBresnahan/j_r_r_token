@@ -1,17 +1,17 @@
 # frozen_string_literal: true
 
-RSpec.describe RuToken do
+RSpec.describe JRRToken do
   it "has a version number" do
-    expect(RuToken::VERSION).not_to be nil
+    expect(JRRToken::VERSION).not_to be nil
   end
 
-  describe RuToken::Tokenizer do
+  describe JRRToken::Tokenizer do
     let(:text) { "Hello world, peace be upon you." }
 
     def self.it_verifies_token_count(models:, expected_count:)
       models.each do |model|
         it "counts #{expected_count} tokens for model '#{model}'" do
-          expect(RuToken::Tokenizer.count(text, model: model)).to eq(expected_count)
+          expect(JRRToken::Tokenizer.count(text, model: model)).to eq(expected_count)
         end
       end
     end
@@ -56,16 +56,16 @@ RSpec.describe RuToken do
     context "with invalid inputs and edge cases" do
       it "raises an ArgumentError for a completely unsupported model" do
         unsupported_model = "my-favorite-model-99"
-        expect { RuToken::Tokenizer.count(text, model: unsupported_model) }
+        expect { JRRToken::Tokenizer.count(text, model: unsupported_model) }
           .to raise_error(ArgumentError, "Model '#{unsupported_model}' not supported.")
       end
 
       it "handles empty strings gracefully" do
-        expect(RuToken::Tokenizer.count("", model: "gpt-4o")).to eq(0)
+        expect(JRRToken::Tokenizer.count("", model: "gpt-4o")).to eq(0)
       end
 
       it "handles non-string text input by calling .to_s" do
-        expect(RuToken::Tokenizer.count(123, model: "gpt-4")).to eq(1)
+        expect(JRRToken::Tokenizer.count(123, model: "gpt-4")).to eq(1)
       end
     end
   end

@@ -3,4 +3,4 @@
 require "mkmf"
 require "rb_sys/mkmf"
 
-create_rust_makefile("ru_token/ru_token")
+create_rust_makefile("j_r_r_token/j_r_r_token")

@@ -54,7 +54,7 @@ fn count_tokens(model: String, text: String) -> Result<usize, Error> {
 
 #[magnus::init]
 fn init() -> Result<(), Error> {
-    let module = define_module("RuToken")?;
+    let module = define_module("JRRToken")?;
     module.define_module_function("count_tokens", function!(count_tokens, 2))?;
     Ok(())
 }

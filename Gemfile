@@ -2,7 +2,7 @@
 
 source "https://rubygems.org"
 
-# Specify your gem's dependencies in ru_token.gemspec
+# Specify your gem's dependencies in j_r_r_token.gemspec
 gemspec
 
 gem "rb_sys", "~> 0.9.63"

@@ -1,19 +1,19 @@
 # frozen_string_literal: true
 
-require_relative "ru_token/version"
+require_relative "j_r_r_token/version"
 
 begin
   ruby_version = RUBY_VERSION.split('.')[0..1].join('.')
-  require "ru_token/#{ruby_version}/ru_token"
+  require "j_r_r_token/#{ruby_version}/j_r_r_token"
 rescue LoadError
   begin
-    require "ru_token/ru_token"
+    require "j_r_r_token/j_r_r_token"
   rescue LoadError
-    warn "Failed to load ru_token native extension."
+    warn "Failed to load j_r_r_token native extension."
   end
 end
 
-module RuToken
+module JRRToken
   class Error < StandardError; end
 
   # This is the main public interface for the gem.
@@ -28,7 +28,7 @@ module RuToken
     def self.count(text, model:)
       # This calls the `count_tokens` function from our Rust code,
       # passing both the model and the text.
-      RuToken.count_tokens(model, text.to_s)
+      JRRToken.count_tokens(model, text.to_s)
     end
   end
 end

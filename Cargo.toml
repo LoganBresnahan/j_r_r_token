@@ -3,5 +3,5 @@
 # in the ext/ directory.
 
 [workspace]
-members = ["./ext/ru_token"]
+members = ["./ext/j_r_r_token"]
 resolver = "2"

@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    ru_token (0.1.20)
+    j_r_r_token (1.0.0)
 
 GEM
   remote: https://rubygems.org/
@@ -39,11 +39,11 @@ PLATFORMS
 
 DEPENDENCIES
   bundler (>= 2.0)
+  j_r_r_token!
   rake (~> 13.0)
   rake-compiler
   rb_sys (~> 0.9.63)
   rspec (~> 3.0)
-  ru_token!
 
 BUNDLED WITH
    2.4.20
