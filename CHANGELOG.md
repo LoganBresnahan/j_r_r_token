@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ---
+## [1.0.3] - 2025-08-01
+### Fix
+- Add Cargo files back to the gemspec.
+### Change
+- Adjust specs.
+
+---
 ## [1.0.2] - 2025-08-01
 ### Change
 - Refine Model Prefix Matching so 4 and 4* match to the correct Core BPE.

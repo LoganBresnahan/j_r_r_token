@@ -50,7 +50,8 @@ RSpec.describe JRRToken do
       models = [
         "cl100k_base", "gpt-4", "gpt-3.5-turbo", "text-embedding-ada-002",
         "gpt-4-32k-0613", "gpt-3.5-turbo-instruct",
-        "ft:gpt-3.5-turbo-xyz", "ft:gpt-4:org:model:123", "ft:gpt-4-turbo"
+        "ft:gpt-3.5-turbo-xyz", "ft:gpt-4:org:model:123", "ft:gpt-4-turbo",
+        "ft:gpt-4"
       ]
 
       it_verifies_token_count(
