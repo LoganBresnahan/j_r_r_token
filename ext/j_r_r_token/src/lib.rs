@@ -28,7 +28,7 @@ fn get_bpe_from_model(model: &str) -> Result<CoreBPE, Error> {
         // --- Fallback for Prefixes ---
         _ => {
             let o200k_prefixes = [
-                "o1-", "o3-", "o4-", "gpt-4.1-", "chatgpt-4o-", "gpt-4o-", "ft:gpt-40"
+                "o1-", "o3-", "o4-", "gpt-4.1-", "chatgpt-4o-", "gpt-4o-", "ft:gpt-4o"
             ];
 
             let cl100k_prefixes = [
