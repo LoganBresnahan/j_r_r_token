@@ -6,57 +6,114 @@ RSpec.describe JRRToken do
   end
 
   describe JRRToken::Tokenizer do
-    let(:text) { "Hello world, peace be upon you." }
+    SIMPLE_TEXT = "Hello world"
+    COMPLEX_TEXT = "The quick brown fox jumps over the lazy dog. 🚀"
 
-    def self.it_verifies_token_count(models:, expected_count:)
-      models.each do |model|
-        it "counts #{expected_count} tokens for model '#{model}'" do
-          expect(JRRToken::Tokenizer.count(text, model: model)).to eq(expected_count)
+    def self.it_verifies_token_count(models:, text:, expected_count:, description: nil)
+      context_desc = description || "with text: '#{text}'"
+
+      context context_desc do
+        models.each do |model|
+          it "counts #{expected_count} tokens for model '#{model}'" do
+            expect(JRRToken::Tokenizer.count(text, model: model)).to eq(expected_count)
+          end
         end
       end
     end
 
-    context "when using o200k_base models (e.g., GPT-4o)" do
+    context "when using o200k_base models" do
       models = [
         "o200k_base", "gpt-4o", "gpt-4.1", "chatgpt-4o-latest",
-        "gpt-4o-2024-05-13", "ft:gpt-4o-abcdef"
+        "gpt-4o-2024-05-13",
+        "ft:gpt-4o-abcdef",
+        "ft:gpt-4o",
+        "ft:gpt-4o:org:model:123",
+        "o1-preview", "o3-mini"
       ]
-      it_verifies_token_count(models: models, expected_count: 8)
+
+      it_verifies_token_count(
+        models: models,
+        text: SIMPLE_TEXT,
+        expected_count: 2,
+        description: "with simple text"
+      )
+
+      it_verifies_token_count(
+        models: models,
+        text: COMPLEX_TEXT,
+        expected_count: 12,
+        description: "with complex text including emoji"
+      )
     end
 
-    context "when using cl100k_base models (e.g., GPT-4, GPT-3.5)" do
+    context "when using cl100k_base models" do
       models = [
         "cl100k_base", "gpt-4", "gpt-3.5-turbo", "text-embedding-ada-002",
-        "gpt-4-32k-0613", "gpt-3.5-turbo-instruct", "ft:gpt-3.5-turbo-xyz"
+        "gpt-4-32k-0613", "gpt-3.5-turbo-instruct",
+        "ft:gpt-3.5-turbo-xyz", "ft:gpt-4:org:model:123", "ft:gpt-4-turbo",
+        "ft:gpt-4"
       ]
-      it_verifies_token_count(models: models, expected_count: 8)
+
+      it_verifies_token_count(
+        models: models,
+        text: SIMPLE_TEXT,
+        expected_count: 2,
+        description: "with simple text"
+      )
+
+      it_verifies_token_count(
+        models: models,
+        text: COMPLEX_TEXT,
+        expected_count: 13,
+        description: "with complex text including emoji"
+      )
     end
 
-    # --- CORRECTED ---
-    context "when using p50k_base models (e.g., text-davinci-003)" do
+    context "when using p50k_base models" do
       models = ["p50k_base", "text-davinci-003", "code-davinci-002"]
-      # The count was 9, corrected to 8.
-      it_verifies_token_count(models: models, expected_count: 8)
+      it_verifies_token_count(models: models, text: SIMPLE_TEXT, expected_count: 2)
     end
 
-    # --- CORRECTED ---
-    context "when using r50k_base models (e.g., GPT-2)" do
+    context "when using r50k_base models" do
       models = ["r50k_base", "gpt2", "davinci", "text-ada-001"]
-      # The count was 9, corrected to 8.
-      it_verifies_token_count(models: models, expected_count: 8)
+      it_verifies_token_count(models: models, text: SIMPLE_TEXT, expected_count: 2)
     end
 
-    # --- CORRECTED ---
     context "when using p50k_edit models" do
       models = ["p50k_edit", "text-davinci-edit-001"]
-      # The count was 9, corrected to 8.
-      it_verifies_token_count(models: models, expected_count: 8)
+      it_verifies_token_count(models: models, text: SIMPLE_TEXT, expected_count: 2)
+    end
+
+    context "fine-tuned model tokenizer verification" do
+      it "uses o200k_base for ft:gpt-4o models, not cl100k_base" do
+        o200k_count = JRRToken::Tokenizer.count(COMPLEX_TEXT, model: "gpt-4o")
+        ft_4o_count = JRRToken::Tokenizer.count(COMPLEX_TEXT, model: "ft:gpt-4o")
+
+        expect(ft_4o_count).to eq(o200k_count),
+          "ft:gpt-4o should use same tokenizer as gpt-4o (o200k_base)"
+      end
+
+      it "uses cl100k_base for ft:gpt-4 models" do
+        cl100k_count = JRRToken::Tokenizer.count(COMPLEX_TEXT, model: "gpt-4")
+        ft_4_count = JRRToken::Tokenizer.count(COMPLEX_TEXT, model: "ft:gpt-4:org:model:123")
+
+        expect(ft_4_count).to eq(cl100k_count),
+          "ft:gpt-4 should use same tokenizer as gpt-4 (cl100k_base)"
+      end
+
+      it "distinguishes between ft:gpt-4 and ft:gpt-4o models" do
+        ft_4_count = JRRToken::Tokenizer.count(COMPLEX_TEXT, model: "ft:gpt-4:org:model:123")
+        ft_4o_count = JRRToken::Tokenizer.count(COMPLEX_TEXT, model: "ft:gpt-4o:org:model:123")
+
+        expect(ft_4_count).not_to eq(ft_4o_count),
+          "ft:gpt-4 and ft:gpt-4o should use different tokenizers"
+      end
     end
 
     context "with invalid inputs and edge cases" do
       it "raises an ArgumentError for a completely unsupported model" do
         unsupported_model = "my-favorite-model-99"
-        expect { JRRToken::Tokenizer.count(text, model: unsupported_model) }
+        expect { JRRToken::Tokenizer.count(SIMPLE_TEXT, model: unsupported_model) }
           .to raise_error(ArgumentError, "Model '#{unsupported_model}' not supported.")
       end
 

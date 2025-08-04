@@ -38,7 +38,7 @@ fn get_bpe_from_model(model: &str) -> Result<CoreBPE, Error> {
 
             if o200k_prefixes.iter().any(|prefix| model.starts_with(prefix)) {
                 o200k_base()
-            } else if cl100k_prefixes.iter().any(|prefix| model.starts_with(prefix)) {
+            } else if cl100k_prefixes.iter().any(|prefix| model.starts_with(prefix)) || model == "ft:gpt-4" {
                 cl100k_base()
             } else {
                 let err_msg = format!("Model '{}' not supported.", model);

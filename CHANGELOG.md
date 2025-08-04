@@ -8,6 +8,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ---
+## [1.0.4] - 2025-08-01
+### Change
+- Bump version for RubyGems.
+
+---
+## [1.0.3] - 2025-08-01
+### Fix
+- Add Cargo files back to the gemspec.
+### Change
+- Adjust specs.
+
+---
+## [1.0.2] - 2025-08-01
+### Change
+- Refine Model Prefix Matching so 4 and 4* match to the correct Core BPE.
+
+---
+## [1.0.1] - 2025-08-01
+### Change
+- Slim down gem by removing unnecessary files defined in the gemspec.
+- Refine Model Prefix Matching so 4 and 4* match to the correct Core BPE.
+
+---
 ## [1.0.0] - 2025-08-01
 ### Breaking Change
 - Rename Gem from ru_token (RuToken) to j_r_r_token (JRRToken).
