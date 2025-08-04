@@ -32,8 +32,8 @@ fn get_bpe_from_model(model: &str) -> Result<CoreBPE, Error> {
             ];
 
             let cl100k_prefixes = [
-                "gpt-4-", "gpt-3.5-turbo-", "gpt-35-turbo-", "ft:gpt-4",
-                "ft:gpt-3.5-turbo", "ft:davinci-002", "ft:babbage-002",
+                "gpt-4-", "gpt-3.5-turbo-", "gpt-35-turbo-", "ft:gpt-4:",
+                "ft:gpt-4-", "ft:gpt-3.5-turbo", "ft:davinci-002", "ft:babbage-002",
             ];
 
             let cl100k_exacts = [
