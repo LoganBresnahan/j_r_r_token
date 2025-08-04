@@ -36,9 +36,13 @@ fn get_bpe_from_model(model: &str) -> Result<CoreBPE, Error> {
                 "ft:gpt-3.5-turbo", "ft:davinci-002", "ft:babbage-002",
             ];
 
+            let cl100k_exacts = [
+                "ft:gpt-4"
+            ];
+
             if o200k_prefixes.iter().any(|prefix| model.starts_with(prefix)) {
                 o200k_base()
-            } else if cl100k_prefixes.iter().any(|prefix| model.starts_with(prefix)) || model == "ft:gpt-4" {
+            } else if cl100k_prefixes.iter().any(|prefix| model.starts_with(prefix)) || cl100k_exacts.iter().any(|exact| model == *exact) {
                 cl100k_base()
             } else {
                 let err_msg = format!("Model '{}' not supported.", model);
