@@ -6,9 +6,9 @@ use tiktoken_rs::{cl100k_base, o200k_base, p50k_base, p50k_edit, r50k_base, Core
 fn get_bpe_from_model(model: &str) -> Result<CoreBPE, Error> {
     let tokenizer = match model {
         // --- O200k Base Models ---
-        "o200k_base" | "gpt-4.1" | "chatgpt-4o-latest" | "gpt-4o" => o200k_base(),
+        "o200k_base" | "gpt-5" | "gpt-4.1" | "chatgpt-4o-latest" | "gpt-4o" => o200k_base(),
         // --- Cl100k Base Models ---
-        "cl100k_base" | "gpt-4" | "gpt-3.5-turbo" | "gpt-3.5" | "gpt-35-turbo"
+        "cl100k_base" | "gpt-4" | "ft:gpt-4" | "gpt-3.5-turbo" | "gpt-3.5" | "gpt-35-turbo"
         | "davinci-002" | "babbage-002" | "text-embedding-ada-002"
         | "text-embedding-3-small" | "text-embedding-3-large" => cl100k_base(),
         // --- P50k Base Models ---
@@ -28,7 +28,7 @@ fn get_bpe_from_model(model: &str) -> Result<CoreBPE, Error> {
         // --- Fallback for Prefixes ---
         _ => {
             let o200k_prefixes = [
-                "o1-", "o3-", "o4-", "gpt-4.1-", "chatgpt-4o-", "gpt-4o-", "ft:gpt-4o"
+                "o1-", "o3-", "o4-", "gpt-5-", "gpt-4.1-", "chatgpt-4o-", "gpt-4o-", "ft:gpt-4o",
             ];
 
             let cl100k_prefixes = [
@@ -36,13 +36,10 @@ fn get_bpe_from_model(model: &str) -> Result<CoreBPE, Error> {
                 "ft:gpt-4-", "ft:gpt-3.5-turbo", "ft:davinci-002", "ft:babbage-002",
             ];
 
-            let cl100k_exacts = [
-                "ft:gpt-4"
-            ];
 
             if o200k_prefixes.iter().any(|prefix| model.starts_with(prefix)) {
                 o200k_base()
-            } else if cl100k_prefixes.iter().any(|prefix| model.starts_with(prefix)) || cl100k_exacts.iter().any(|exact| model == *exact) {
+            } else if cl100k_prefixes.iter().any(|prefix| model.starts_with(prefix)) {
                 cl100k_base()
             } else {
                 let err_msg = format!("Model '{}' not supported.", model);
