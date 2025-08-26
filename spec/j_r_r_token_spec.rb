@@ -23,7 +23,7 @@ RSpec.describe JRRToken do
 
     context "when using o200k_base models" do
       models = [
-        "o200k_base", "gpt-4o", "gpt-4.1", "chatgpt-4o-latest",
+        "o200k_base", "gpt-5", "gpt-4o", "gpt-4.1", "chatgpt-4o-latest",
         "gpt-4o-2024-05-13",
         "ft:gpt-4o-abcdef",
         "ft:gpt-4o",
