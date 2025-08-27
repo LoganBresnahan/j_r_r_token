@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ---
+## [1.1.0] - 2025-08-26
+### New Functionality
+- Added support for the `gpt-5` model name, which maps to the `o200k_base` tokenizer model.
+
+#### New contributors
+- [8edaf40](https://github.com/LoganBresnahan/j_r_r_token/commit/8edaf4021dae4ae41dcfa53fa5fb0fe61d9b0b9c) by [jordanmoore753](https://github.com/jordanmoore753)
+- [a9738c7](https://github.com/LoganBresnahan/j_r_r_token/commit/a9738c7f0d4e7e691af8b8219e89d09b4a3367c0) by [lsysophia](https://github.com/lsysophia)
+
+---
 ## [1.0.4] - 2025-08-01
 ### Change
 - Bump version for RubyGems.
