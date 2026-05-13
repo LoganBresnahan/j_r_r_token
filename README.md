@@ -6,7 +6,7 @@ JRRToken provides a high-performance, native Ruby interface for counting tokens 
 
 The gem ships with pre-compiled native extensions for Linux and macOS, so your end-users don't need a Rust toolchain installed.
 
-Supports Ruby >= 2.7.0
+Supports Ruby >= 3.0.0
 
 Extensive Model Support: Includes tokenizers for all modern and legacy OpenAI models, recognizing dozens of model aliases automatically.
 
@@ -54,7 +54,7 @@ Fine-tuned models (`ft:<base>:org:name:id`) are automatically resolved to the sa
 ## Developing JRRToken Locally
 
 ### Install Ruby and Rust dependencies
-Ruby >= 2.7.0
+Ruby >= 3.0.0
 
 RubyGems >= 3.0.0
 

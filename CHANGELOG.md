@@ -8,7 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ---
-## [1.2.0] - 2026-05-13
+## [1.2.1] - 2026-05-13
+### Breaking Change
+- Minimum Ruby version raised from 2.7.0 to 3.0.0. Ruby 2.7 has been EOL since March 2023 and is no longer supported by upstream `rake-compiler-dock` (1.11.0+) which `rb_sys` uses for cross-compiling native gems. Production environments on Ruby 3.0+ are unaffected.
+
 ### New Functionality
 - Added `o200k_harmony` tokenizer with support for `gpt-oss-20b` and `gpt-oss-120b`.
 - Added support for additional model aliases now recognized by `tiktoken-rs` 0.11: `gpt-5-mini`, `gpt-5-nano`, `gpt-5.x` decimal variants (e.g. `gpt-5.4`, `gpt-5.4-pro`, `gpt-5.2-codex`), `gpt-4.5-*`, `o1`, `o3`, `o4-mini`, `codex-mini`, `codex-mini-latest`, and `ft:gpt-5` fine-tunes.
@@ -16,8 +19,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Change
 - Bumped `tiktoken-rs` from 0.7 to 0.11.
-- Bumped `magnus` from 0.6 to 0.8 (with the `old-api` feature enabled to preserve current bindings). Still supports Ruby >= 2.7.
+- Bumped `magnus` from 0.6 to 0.8 (with the `old-api` feature enabled to preserve current bindings). Still supports Ruby >= 3.0.
 - Refactored Rust model dispatch to delegate to `tiktoken_rs::tokenizer::get_tokenizer` instead of maintaining a parallel alias list. The gem now stays in sync with upstream OpenAI tiktoken automatically on each `tiktoken-rs` bump.
+- CI matrix trimmed: dropped deprecated `macos-13`; consolidated to `ubuntu-latest`, `ubuntu-24.04-arm`, `macos-latest`, `macos-15-intel`. Added Ruby 4.0 to both test and cross-gem builds.
+
+---
+## [1.2.0] - 2026-05-13
+### Note
+- Partial release. The `arm-linux` cross-compile leg failed because upstream `rake-compiler-dock` 1.11.0+ dropped Ruby 2.7, so the published artifact set is incomplete. Please use 1.2.1 instead, which drops Ruby 2.7 from the support matrix and ships a complete set of platform gems.
 
 ---
 ## [1.1.0] - 2025-08-26
