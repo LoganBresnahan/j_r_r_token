@@ -24,7 +24,7 @@ Extensive Model Support: Includes tokenizers for all modern and legacy OpenAI mo
 
 ### Count tokens for a specific model (the model keyword is required)
 ```Ruby
-count = JRRToken::Tokenizer.count("hello world!", model: "gpt-5")
+count = JRRToken::Tokenizer.count("hello world!", model: "gpt-5.4")
 ```
 
 ### The gem recognizes many aliases, including older models
@@ -43,7 +43,7 @@ If you provide an unsupported model name, the gem will raise an `ArgumentError`.
 The gem automatically maps dozens of model names and prefixes to the correct underlying tokenizer. You don't need to know the tokenizer's base name (e.g., cl100k_base); just use the model name you're working with. Model resolution is delegated to [`tiktoken-rs`](https://github.com/zurawiki/tiktoken-rs), so the alias list stays in sync with upstream.
 
 - o200k_harmony Models (e.g., gpt-oss-20b, gpt-oss-120b)
-- o200k_base Models (e.g., gpt-5, gpt-5-mini, gpt-5.4, gpt-4.5, gpt-4.1, gpt-4o, o1, o3, o4-mini, codex-mini)
+- o200k_base Models (e.g., gpt-5.4, gpt-5-mini, gpt-4.5, gpt-4.1, gpt-4o, o1, o3, o4-mini, codex-mini)
 - cl100k_base Models (e.g., gpt-4, gpt-3.5-turbo, text-embedding-3-small)
 - p50k_base Models (e.g., text-davinci-003)
 - r50k_base Models (e.g., gpt-2)
