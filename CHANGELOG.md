@@ -8,6 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ---
+## [1.2.0] - 2026-05-13
+### New Functionality
+- Added `o200k_harmony` tokenizer with support for `gpt-oss-20b` and `gpt-oss-120b`.
+- Added support for additional model aliases now recognized by `tiktoken-rs` 0.11: `gpt-5-mini`, `gpt-5-nano`, `gpt-5.x` decimal variants (e.g. `gpt-5.4`, `gpt-5.4-pro`, `gpt-5.2-codex`), `gpt-4.5-*`, `o1`, `o3`, `o4-mini`, `codex-mini`, `codex-mini-latest`, and `ft:gpt-5` fine-tunes.
+- Fine-tuned model resolution (`ft:` prefix) is now handled natively by the upstream `get_tokenizer` mapping, so any future ft: bases are picked up automatically.
+
+### Change
+- Bumped `tiktoken-rs` from 0.7 to 0.11.
+- Bumped `magnus` from 0.6 to 0.8 (with the `old-api` feature enabled to preserve current bindings). Still supports Ruby >= 2.7.
+- Refactored Rust model dispatch to delegate to `tiktoken_rs::tokenizer::get_tokenizer` instead of maintaining a parallel alias list. The gem now stays in sync with upstream OpenAI tiktoken automatically on each `tiktoken-rs` bump.
+
+---
 ## [1.1.0] - 2025-08-26
 ### New Functionality
 - Added support for the `gpt-5` model name, which maps to the `o200k_base` tokenizer model.

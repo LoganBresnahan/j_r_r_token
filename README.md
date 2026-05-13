@@ -15,10 +15,10 @@ Extensive Model Support: Includes tokenizers for all modern and legacy OpenAI mo
 ## Install
 
 #### Gemfile
-`gem 'j_r_r_token', '~> 1.1'`
+`gem 'j_r_r_token', '~> 1.2'`
 
 #### Command Line
-`gem install j_r_r_token -v '~> 1.1'`
+`gem install j_r_r_token -v '~> 1.2'`
 
 ## Use
 
@@ -40,13 +40,16 @@ count = JRRToken::Tokenizer.count(1234, model: "o200k_base")
 If you provide an unsupported model name, the gem will raise an `ArgumentError`.
 
 ## Supported Models
-The gem automatically maps dozens of model names and prefixes to the correct underlying tokenizer. You don't need to know the tokenizer's base name (e.g., cl100k_base); just use the model name you're working with.
+The gem automatically maps dozens of model names and prefixes to the correct underlying tokenizer. You don't need to know the tokenizer's base name (e.g., cl100k_base); just use the model name you're working with. Model resolution is delegated to [`tiktoken-rs`](https://github.com/zurawiki/tiktoken-rs), so the alias list stays in sync with upstream.
 
-- o200k_base Models (e.g., gpt-5, gpt-4.1, gpt-4o)
-- cl100k_base Models (e.g., gpt-4, gpt-3.5)
+- o200k_harmony Models (e.g., gpt-oss-20b, gpt-oss-120b)
+- o200k_base Models (e.g., gpt-5, gpt-5-mini, gpt-5.4, gpt-4.5, gpt-4.1, gpt-4o, o1, o3, o4-mini, codex-mini)
+- cl100k_base Models (e.g., gpt-4, gpt-3.5-turbo, text-embedding-3-small)
 - p50k_base Models (e.g., text-davinci-003)
 - r50k_base Models (e.g., gpt-2)
 - p50k_edit Models
+
+Fine-tuned models (`ft:<base>:org:name:id`) are automatically resolved to the same tokenizer as their base model.
 
 ## Developing JRRToken Locally
 

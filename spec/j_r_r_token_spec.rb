@@ -23,12 +23,15 @@ RSpec.describe JRRToken do
 
     context "when using o200k_base models" do
       models = [
-        "o200k_base", "gpt-5", "gpt-4o", "gpt-4.1", "chatgpt-4o-latest",
+        "o200k_base", "gpt-5", "gpt-5-mini", "gpt-5-nano", "gpt-5.4", "gpt-5.4-pro",
+        "gpt-4o", "gpt-4.1", "gpt-4.5-preview", "chatgpt-4o-latest",
         "gpt-4o-2024-05-13",
         "ft:gpt-4o-abcdef",
         "ft:gpt-4o",
         "ft:gpt-4o:org:model:123",
-        "o1-preview", "o3-mini"
+        "ft:gpt-5:org:model",
+        "o1", "o1-preview", "o3", "o3-mini", "o4-mini",
+        "codex-mini", "codex-mini-latest"
       ]
 
       it_verifies_token_count(
@@ -43,6 +46,17 @@ RSpec.describe JRRToken do
         text: COMPLEX_TEXT,
         expected_count: 12,
         description: "with complex text including emoji"
+      )
+    end
+
+    context "when using o200k_harmony models" do
+      models = ["o200k_harmony", "gpt-oss-20b", "gpt-oss-120b"]
+
+      it_verifies_token_count(
+        models: models,
+        text: SIMPLE_TEXT,
+        expected_count: 2,
+        description: "with simple text"
       )
     end
 
@@ -107,6 +121,14 @@ RSpec.describe JRRToken do
 
         expect(ft_4_count).not_to eq(ft_4o_count),
           "ft:gpt-4 and ft:gpt-4o should use different tokenizers"
+      end
+
+      it "uses o200k_base for ft:gpt-5 models" do
+        gpt5_count = JRRToken::Tokenizer.count(COMPLEX_TEXT, model: "gpt-5")
+        ft_5_count = JRRToken::Tokenizer.count(COMPLEX_TEXT, model: "ft:gpt-5:org:model:abc")
+
+        expect(ft_5_count).to eq(gpt5_count),
+          "ft:gpt-5 should use same tokenizer as gpt-5 (o200k_base)"
       end
     end
 
