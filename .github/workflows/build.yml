@@ -40,7 +40,7 @@ jobs:
         id: fetch
         with:
           supported-ruby-platforms: |
-            exclude: ['x64-mingw32', 'x64-mingw-ucrt']
+            exclude: ['x64-mingw32', 'x64-mingw-ucrt', 'aarch64-mingw-ucrt']
           stable-ruby-versions: |
             exclude: [head]
 
