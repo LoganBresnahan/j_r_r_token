@@ -1,10 +1,13 @@
 <p align="center">
-  <img src="https://github.com/LoganBresnahan/j_r_r_token/raw/main/.github/assets/rings.png" width="320px" alt="JRRToken" />
+  <img src="https://github.com/LoganBresnahan/j_r_r_token/raw/main/.github/assets/rings.png" height="120px" alt="JRRToken" />
 </p>
+
+<h1 align="center">JRRToken</h1>
+<h2 align="center">v1.2.1</h2>
 
 <p align="center">(Just Ruby, Rust, &amp; Tokens)</p>
 
-# JRRToken [<img src="https://github.com/LoganBresnahan/j_r_r_token/raw/main/.github/assets/ring.png" width="32px" alt="One ring to rule them all, one ring to find them, One ring to bring them all and in the darkness bind them.">](https://www.youtube.com/watch?v=lemgdzLDYqA)
+---
 
 JRRToken provides a high-performance, native Ruby interface for counting tokens using the powerful [tiktoken-rs](https://github.com/zurawiki/tiktoken-rs) library. It leverages the speed of Rust to offer a fast and efficient way to calculate token counts for various OpenAI models.
 
