@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Breaking Change
+- Removed the undocumented `JRRToken.count_tokens(model, text)` native entry point. Use `JRRToken::Tokenizer.count(text, model:)` or `JRRToken::Tokenizer.for_model(model).count(text)`.
+- `JRRToken::Tokenizer` is now a native class whose instances are built only by `for_model`; `Tokenizer.new` and `Tokenizer.allocate` are private.
+
+### New Functionality
+- `JRRToken::Tokenizer.for_model(model)` returns a tokenizer instance for a model name or bare encoding name. Models that share an encoding return the same frozen instance (one per encoding), so instances are cheap to fetch and safe to share across threads.
+- Instance methods: `#encoding` (e.g. `"o200k_base"`), `#count(text)`, `#encode(text)` (token ids) and `#decode(tokens)`. `decode` replaces bytes that don't form valid UTF-8 (a token slice cutting a multi-byte character) with U+FFFD, matching Python tiktoken's default, and raises `ArgumentError` for token ids not in the encoding.
+- `#decode_bytes(tokens)` returns the exact bytes as a binary (ASCII-8BIT) String, with nothing replaced, for callers that need byte-exact output or join several token slices before converting to UTF-8.
+- Token ids passed to `decode` / `decode_bytes` must be Integers; other numerics (e.g. `1.5`) raise `TypeError`.
+- Class-level shortcuts for the new methods: `Tokenizer.encode(text, model:)`, `Tokenizer.decode(tokens, model:)` and `Tokenizer.decode_bytes(tokens, model:)`, alongside the existing `Tokenizer.count(text, model:)`.
+
+### Change
+- If the native extension can't be loaded, `require "j_r_r_token"` now raises `LoadError` (with the underlying reason) instead of printing a warning and failing later with a confusing error.
 
 ---
 ## [1.3.0] - 2026-11-22
