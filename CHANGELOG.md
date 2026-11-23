@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bumped `rb_sys` (gem and crate) from 0.9.128 to 0.9.130. It still pins `rake-compiler-dock` 1.12.0, so Ruby 3.0 platform gems are unaffected.
 - README: documented the `RuntimeError` case, the one-time build cost and memory per encoding (with a boot-time warm-up tip for preforking servers), and the Rust >= 1.85 requirement for source builds.
 - Gemspec description now lists `o200k_harmony`; added RBS signatures for `JRRToken::Tokenizer.count`.
+- CI: excluded `arm-linux-musl` from the cross-gem matrix. rb-sys 0.9.130 added it as a new target; it has never shipped for this gem and is not part of this release.
 
 ---
 ## [1.2.1] - 2026-05-13
