@@ -132,6 +132,43 @@ RSpec.describe JRRToken do
       end
     end
 
+    context "tokenizer caching" do
+      it "returns stable counts across repeated calls and interleaved encodings" do
+        models = ["gpt-4o", "gpt-4", "text-davinci-003", "gpt-oss-20b", "gpt2"]
+        expected = models.to_h { |m| [m, JRRToken::Tokenizer.count(COMPLEX_TEXT, model: m)] }
+
+        3.times do
+          models.each do |model|
+            expect(JRRToken::Tokenizer.count(COMPLEX_TEXT, model: model)).to eq(expected[model])
+          end
+        end
+      end
+
+      # Smoke test: the GVL serializes calls into the extension, so this can't catch a data
+      # race (that's guaranteed by CoreBPE: Sync). Expected counts are hardcoded so the
+      # threads, not the main thread, trigger any first-time tokenizer builds.
+      it "returns correct counts when called concurrently from multiple threads" do
+        expected = {
+          "gpt-4o" => 12, "gpt-4" => 13, "text-davinci-003" => 13,
+          "p50k_edit" => 13, "r50k_base" => 13, "o200k_harmony" => 12
+        }
+        models = expected.keys
+
+        results = 8.times.map do |i|
+          Thread.new do
+            20.times.map do |j|
+              model = models[(i + j) % models.size]
+              [model, JRRToken::Tokenizer.count(COMPLEX_TEXT, model: model)]
+            end
+          end
+        end.flat_map(&:value)
+
+        results.each do |model, count|
+          expect(count).to eq(expected[model]), "#{model} returned #{count}, expected #{expected[model]}"
+        end
+      end
+    end
+
     context "with invalid inputs and edge cases" do
       it "raises an ArgumentError for a completely unsupported model" do
         unsupported_model = "my-favorite-model-99"
