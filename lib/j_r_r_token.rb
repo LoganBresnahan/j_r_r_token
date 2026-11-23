@@ -29,6 +29,181 @@ module JRRToken
   #   @return [Integer, nil]
   #   @raise [TypeError] if model is not a String
 
+  # Encodings that chat models use; count_messages only supports these.
+  CHAT_ENCODINGS = %w[o200k_harmony o200k_base cl100k_base].freeze
+  private_constant :CHAT_ENCODINGS
+
+  # Estimates the prompt tokens for a list of chat messages, including the per-message
+  # framing tokens chat models add, using OpenAI's cookbook formula. The constants and the
+  # handling of OpenAI-shaped messages mirror tiktoken-rs 0.12.1's num_tokens_from_messages
+  # and its async-openai adapter (re-verify on tiktoken-rs bumps). It's an estimate: tool
+  # definitions and non-text content (images, audio, files) aren't counted, and providers
+  # can change their framing.
+  #
+  # Each message is a Hash with String or Symbol keys:
+  # - "role" (required).
+  # - "content": a String, nil, or an Array of content parts. "text" parts are joined and
+  #   counted; "refusal" parts are joined and counted as the refusal; "image_url",
+  #   "input_audio" and "file" parts are skipped (not counted). Unknown part types raise.
+  # - optional "name", "refusal", "function_call" ({name:, arguments:}) and "tool_calls":
+  #   an Array of {function: {name:, arguments:}} or {type: "custom", custom: {name:, input:}}
+  #   as in the OpenAI API, or flat {name:, arguments:}.
+  # - for "tool" messages, "tool_call_id" is counted as the name, as tiktoken-rs does.
+  # Other keys are ignored.
+  #
+  #   JRRToken.count_messages([{role: "user", content: "Hello!"}], model: "gpt-4o")  # => 9
+  #
+  # @param messages [Array<Hash>]
+  # @param model [String] a chat model (o200k_base, o200k_harmony or cl100k_base encoding)
+  # @param special_tokens [Symbol] :text (default), :allow or :raise; see Tokenizer
+  # @return [Integer]
+  # @raise [ArgumentError] for an unsupported model or a malformed message
+  def self.count_messages(messages, model:, special_tokens: :text)
+    tokenizer = Tokenizer.for_model(model)
+    unless CHAT_ENCODINGS.include?(tokenizer.encoding)
+      raise ArgumentError, "count_messages supports chat models (o200k_base, o200k_harmony or " \
+                           "cl100k_base encodings); '#{model}' uses #{tokenizer.encoding}."
+    end
+    list = Array.try_convert(messages) or raise TypeError, "messages must be an Array, got #{messages.class}"
+
+    # gpt-3.5-turbo-0301 used different framing (kept for parity with tiktoken-rs).
+    per_message, per_name = model == "gpt-3.5-turbo-0301" ? [4, -1] : [3, 1]
+    count = ->(text) { tokenizer.count(text, special_tokens: special_tokens) }
+
+    total = 3 # every reply is primed with <|start|>assistant<|message|>
+    list.each_with_index do |raw, index|
+      message = MessageFields.new(raw, index)
+      total += per_message
+      total += count.(message.role)
+      content, refusal = message.content_and_refusal
+      total += count.(content) if content
+      if (name = message.name)
+        total += count.(name) + per_name
+      end
+      total += count.(refusal) if refusal
+      message.function_calls.each do |function_name, arguments|
+        total += count.(function_name) + count.(arguments) + 1
+      end
+    end
+    total
+  end
+
+  # Reads a chat message Hash with String or Symbol keys. Internal to count_messages.
+  class MessageFields
+    NON_TEXT_PARTS = %w[image_url input_audio file].freeze
+
+    def initialize(message, index)
+      @index = index
+      @message = Hash.try_convert(message) or
+        raise TypeError, "message #{index} must be a Hash, got #{message.class}"
+    end
+
+    def role
+      @role ||= string_field(@message, "role", required: true)
+    end
+
+    # The name, or for "tool" messages without one, the tool_call_id (as tiktoken-rs counts it).
+    def name
+      name = string_field(@message, "name")
+      name ||= string_field(@message, "tool_call_id") if role == "tool"
+      name
+    end
+
+    # [content_text_or_nil, refusal_or_nil]. Text parts are joined with ""; refusal parts are
+    # joined and take precedence over a "refusal" field.
+    def content_and_refusal
+      content = value(@message, "content")
+      refusal_field = string_field(@message, "refusal")
+      case content
+      when nil then [nil, refusal_field]
+      when String then [content, refusal_field]
+      when Array
+        texts = []
+        refusals = []
+        content.each_with_index do |raw_part, i|
+          part = Hash.try_convert(raw_part) or
+            raise TypeError, "message #{@index} content part #{i} must be a Hash, got #{raw_part.class}"
+          type = string_field(part, "type", required: true, label: "content[#{i}].type")
+          case type
+          when "text" then texts << string_field(part, "text", required: true, label: "content[#{i}].text")
+          when "refusal" then refusals << string_field(part, "refusal", required: true, label: "content[#{i}].refusal")
+          when *NON_TEXT_PARTS
+            next # not countable as text; skipped, as tiktoken-rs does
+          else
+            raise ArgumentError, "message #{@index} content part #{i} has unknown type \"#{type}\""
+          end
+        end
+        [join(texts), join(refusals) || refusal_field]
+      else
+        raise TypeError, "message #{@index} \"content\" must be a String, Array or nil, got #{content.class}"
+      end
+    end
+
+    # [[name, arguments], ...] from function_call and tool_calls.
+    def function_calls
+      calls = []
+      function_call = value(@message, "function_call")
+      calls << function_pair(function_call, "function_call") if function_call
+      raw_calls = value(@message, "tool_calls")
+      return calls unless raw_calls
+
+      tool_calls = Array.try_convert(raw_calls) or
+        raise TypeError, "message #{@index} \"tool_calls\" must be an Array, got #{raw_calls.class}"
+      tool_calls.each_with_index do |raw_call, i|
+        label = "tool_calls[#{i}]"
+        tool_call = Hash.try_convert(raw_call) or
+          raise TypeError, "message #{@index} #{label} must be a Hash, got #{raw_call.class}"
+        if (custom = value(tool_call, "custom"))
+          calls << custom_pair(custom, "#{label}.custom")
+        elsif (function = value(tool_call, "function"))
+          calls << function_pair(function, "#{label}.function")
+        else
+          calls << function_pair(tool_call, label)
+        end
+      end
+      calls
+    end
+
+    private
+
+    def value(hash, key)
+      hash.fetch(key) { hash.fetch(key.to_sym, nil) }
+    end
+
+    def string_field(hash, key, required: false, label: key)
+      field = value(hash, key)
+      if field.nil?
+        raise ArgumentError, "message #{@index} is missing \"#{label}\"" if required
+
+        return nil
+      end
+      raise TypeError, "message #{@index} \"#{label}\" must be a String, got #{field.class}" unless field.is_a?(String)
+
+      field
+    end
+
+    def join(texts)
+      texts.empty? ? nil : texts.join
+    end
+
+    def function_pair(raw_call, label)
+      call = hash_for(raw_call, label)
+      [string_field(call, "name", required: true, label: "#{label}.name"),
+       string_field(call, "arguments", required: true, label: "#{label}.arguments")]
+    end
+
+    def custom_pair(raw_call, label)
+      call = hash_for(raw_call, label)
+      [string_field(call, "name", required: true, label: "#{label}.name"),
+       string_field(call, "input", required: true, label: "#{label}.input")]
+    end
+
+    def hash_for(raw, label)
+      Hash.try_convert(raw) or raise TypeError, "message #{@index} #{label} must be a Hash, got #{raw.class}"
+    end
+  end
+  private_constant :MessageFields
+
   # Raised with `special_tokens: :raise` when the text contains a special-token string
   # such as "<|endoftext|>".
   class SpecialTokenError < ArgumentError; end
