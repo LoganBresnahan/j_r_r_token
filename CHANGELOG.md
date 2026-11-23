@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - README: documented the `RuntimeError` case, the one-time build cost and memory per encoding (with a boot-time warm-up tip for preforking servers), and the Rust >= 1.85 requirement for source builds.
 - Gemspec description now lists `o200k_harmony`; added RBS signatures for `JRRToken::Tokenizer.count`.
 - CI: the cross-gem matrix is now an explicit allowlist of the seven platforms this gem ships (`aarch64-linux`, `aarch64-linux-musl`, `arm-linux`, `arm64-darwin`, `x86_64-darwin`, `x86_64-linux`, `x86_64-linux-musl`) instead of an exclude list. The platform list comes from rb-sys `main` at release time, so new rb-sys targets (e.g. `arm-linux-musl`, added in 0.9.130) previously slipped into the release matrix; adding a platform is now a deliberate edit.
+- CI: test jobs pin `ubuntu-24.04` instead of `ubuntu-latest`. Ruby 3.2.11's ubuntu-26.04 build (from ruby/ruby-builder, compiled with GCC 15 in C23 mode) lacks `HAVE_STDBOOL_H` in its `config.h`, so rb-sys's bindgen step fails with "unknown type name 'bool'". Other Ruby versions on that image, and Ruby 3.2 on the ARM Linux and macOS runners, were unaffected.
 
 ---
 ## [1.2.1] - 2026-05-13

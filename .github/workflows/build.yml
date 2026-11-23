@@ -16,7 +16,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, macos-15-intel]
+        # ubuntu-24.04 pinned: Ruby 3.2.11's ubuntu-26.04 build (ruby/ruby-builder, GCC 15 / C23)
+        # lacks HAVE_STDBOOL_H in config.h, so rb-sys bindgen fails with "unknown type name 'bool'".
+        os: [ubuntu-24.04, ubuntu-24.04-arm, macos-latest, macos-15-intel]
         ruby: ['3.0', '3.1', '3.2', '3.3', '3.4', '4.0']
     steps:
       - uses: actions/checkout@v4
