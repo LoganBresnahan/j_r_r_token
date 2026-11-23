@@ -6,15 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+---
+## [2.0.0] - 2026-11-22
 ### Breaking Change
 - Removed the undocumented `JRRToken.count_tokens(model, text)` native entry point. Use `JRRToken::Tokenizer.count(text, model:)` or `JRRToken::Tokenizer.for_model(model).count(text)`.
 - `JRRToken::Tokenizer` is now a native class whose instances are built only by `for_model`; `Tokenizer.new` and `Tokenizer.allocate` are private.
+- Text that isn't valid in its encoding now raises `ArgumentError` ("invalid byte sequence in UTF-8") instead of `EncodingError`.
 - Special-token strings in input text (e.g. `"<|endoftext|>"`) are now treated as **ordinary text by default** (`special_tokens: :text`), so untrusted input can't be counted as control tokens. In 1.x, `count` encoded them as single special tokens (`"<|endoftext|>"` on gpt-4o: 1 token in 1.x, 7 now). Pass `special_tokens: :allow` for the old behavior, or `:raise` to reject such input (Python tiktoken's default).
 
 ### New Functionality
 - `JRRToken::Tokenizer.for_model(model)` returns a tokenizer instance for a model name or bare encoding name. Models that share an encoding return the same frozen instance (one per encoding), so instances are cheap to fetch and safe to share across threads.
 - Instance methods: `#encoding` (e.g. `"o200k_base"`), `#count(text)`, `#encode(text)` (token ids) and `#decode(tokens)`. `decode` replaces bytes that don't form valid UTF-8 (a token slice cutting a multi-byte character) with U+FFFD, matching Python tiktoken's default, and raises `ArgumentError` for token ids not in the encoding.
-- `special_tokens:` option on `count`, `encode` and `truncate` (and their class-level shortcuts): `:text` (default, plain text), `:allow` (encode as special tokens) or `:raise` (raise `JRRToken::SpecialTokenError`, a subclass of `ArgumentError`, naming the token found). All three modes use the error-reporting encode path, so the pathological-input case still raises `RuntimeError` rather than crashing.
+- `special_tokens:` option on `count`, `encode`, `truncate` and `split` (and their class-level shortcuts): `:text` (default, plain text), `:allow` (encode as special tokens) or `:raise` (raise `JRRToken::SpecialTokenError`, a subclass of `ArgumentError`, naming the token found). All three modes use the error-reporting encode path, so the pathological-input case still raises `RuntimeError` rather than crashing.
 - `#truncate(text, max_tokens:)` cuts `text` at a token boundary: the text of its first `max_tokens` tokens (fewer if needed to stay within budget), dropping a trailing character the cut would split. The result is always a prefix of the input, valid UTF-8, and `count(result)` (with the same `special_tokens:`) is guaranteed to be at most `max_tokens`. Like tiktoken's `decode(encode(text)[:n])` idiom, it is not necessarily the longest prefix that fits. Class shortcut: `Tokenizer.truncate(text, max_tokens:, model:)`.
 - `#split(text)` returns the text of each token (e.g. `"hello world"` -> `["hello", " world"]`), honoring `special_tokens:`. A token's incomplete multi-byte character bytes are shown as U+FFFD, so joining the pieces doesn't always reproduce the text. Class shortcut: `Tokenizer.split(text, model:)`.
 - `JRRToken.context_size(model)` returns the model's context window in tokens (e.g. `128_000` for `"gpt-4o"`), or `nil` if the model isn't in tiktoken-rs's table. Fine-tuned names resolve to their base model. Values come from tiktoken-rs's prefix-matched table as-is, so they can be stale or loose (e.g. bare `gpt-4-turbo` reports 8,192, `davinci-002` 2,049), and a name can have a context size without having a tokenizer (e.g. `gpt-6`, `o4`).
@@ -22,9 +26,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `#decode_bytes(tokens)` returns the exact bytes as a binary (ASCII-8BIT) String, with nothing replaced, for callers that need byte-exact output or join several token slices before converting to UTF-8.
 - Token ids passed to `decode` / `decode_bytes` must be Integers; other numerics (e.g. `1.5`) raise `TypeError`.
 - Class-level shortcuts for the new methods: `Tokenizer.encode(text, model:)`, `Tokenizer.decode(tokens, model:)` and `Tokenizer.decode_bytes(tokens, model:)`, alongside the existing `Tokenizer.count(text, model:)`.
+- Binary (ASCII-8BIT) text, such as `File.binread` output or HTTP bodies, and US-ASCII text holding non-ASCII bytes (`File.read` with no locale set, e.g. in a Docker image without `LANG`) are now accepted when their bytes are valid UTF-8 (they previously raised `EncodingError`). The caller's string is not modified. Other encodings are transcoded as before, and returned strings are UTF-8.
+- Tokenizers support Marshal: they dump as their encoding name and load back as the shared instance, so they can live inside cached or marshaled objects.
+- RBS signatures cover the full public API.
 
 ### Change
 - If the native extension can't be loaded, `require "j_r_r_token"` now raises `LoadError` (with the underlying reason) instead of printing a warning and failing later with a confusing error.
+- README rewritten for the 2.0 API, with an "Upgrading to 2.0" section.
 
 ---
 ## [1.3.0] - 2026-11-22

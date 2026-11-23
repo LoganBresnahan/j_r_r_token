@@ -1,15 +1,52 @@
 module JRRToken
   VERSION: String
 
-  # Native extension entry point (implemented in Rust).
-  def self.count_tokens: (String model, String text) -> Integer
+  type special_tokens_mode = :text | :allow | :raise
+
+  type message_key = String | Symbol
+  type message = Hash[message_key, untyped]
 
   class Error < StandardError
   end
 
+  # Raised with `special_tokens: :raise` when text contains a special-token string.
+  class SpecialTokenError < ArgumentError
+  end
+
+  # The model's context window in tokens, or nil if the model isn't in tiktoken-rs's table.
+  def self.context_size: (String model) -> Integer?
+
+  # Estimated prompt tokens for chat messages (framing and reply priming included).
+  def self.count_messages: (Array[message] messages, model: String, ?special_tokens: special_tokens_mode) -> Integer
+
   class Tokenizer
-    # Counts tokens in `text` (converted with #to_s) for the given model or encoding name.
-    # Raises ArgumentError for an unsupported model, RuntimeError if tokenization fails.
-    def self.count: (_ToS text, model: String) -> Integer
+    ENCODINGS: Array[String]
+    SPECIAL_TOKEN_MODES: Array[special_tokens_mode]
+
+    # The shared, frozen tokenizer for a model or bare encoding name.
+    def self.for_model: (String model) -> Tokenizer
+
+    def self.count: (_ToS text, model: String, ?special_tokens: special_tokens_mode) -> Integer
+    def self.encode: (_ToS text, model: String, ?special_tokens: special_tokens_mode) -> Array[Integer]
+    def self.decode: (Array[Integer] tokens, model: String) -> String
+    def self.decode_bytes: (Array[Integer] tokens, model: String) -> String
+    def self.truncate: (_ToS text, max_tokens: Integer, model: String, ?special_tokens: special_tokens_mode) -> String
+    def self.split: (_ToS text, model: String, ?special_tokens: special_tokens_mode) -> Array[String]
+    def self._load: (String encoding) -> Tokenizer
+
+    # The encoding name, e.g. "o200k_base" (frozen).
+    attr_reader encoding: String
+
+    def count: (_ToS text, ?special_tokens: special_tokens_mode) -> Integer
+    def encode: (_ToS text, ?special_tokens: special_tokens_mode) -> Array[Integer]
+    def decode: (Array[Integer] tokens) -> String
+    def decode_bytes: (Array[Integer] tokens) -> String
+    def truncate: (_ToS text, max_tokens: Integer, ?special_tokens: special_tokens_mode) -> String
+    def split: (_ToS text, ?special_tokens: special_tokens_mode) -> Array[String]
+    def dup: () -> self
+    def clone: (?freeze: bool?) -> self
+    def inspect: () -> String
+    def to_s: () -> String
+    def _dump: (Integer level) -> String
   end
 end

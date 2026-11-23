@@ -228,6 +228,13 @@ module JRRToken
   # - `:text` (default): treat it as ordinary text. Right for user-supplied input.
   # - `:allow`: encode it as the single special token.
   # - `:raise`: raise JRRToken::SpecialTokenError.
+  #
+  # == Text
+  #
+  # Text is converted with #to_s. Binary (ASCII-8BIT) strings, such as File.binread or
+  # HTTP bodies, and US-ASCII strings holding non-ASCII bytes (File.read with no locale set)
+  # are read as UTF-8 when their bytes are valid UTF-8; other encodings are transcoded to
+  # UTF-8. Invalid input raises ArgumentError. Returned strings are UTF-8.
   class Tokenizer
     ENCODINGS = %w[o200k_harmony o200k_base cl100k_base p50k_base p50k_edit r50k_base].freeze
     SPECIAL_TOKEN_MODES = %i[text allow raise].freeze
@@ -295,7 +302,7 @@ module JRRToken
     # @return [Integer]
     # @raise [JRRToken::SpecialTokenError] with `special_tokens: :raise`
     def count(text, special_tokens: :text)
-      text = text.to_s
+      text = utf8_text(text)
       _count(text, allow_special?(text, special_tokens))
     end
 
@@ -305,7 +312,7 @@ module JRRToken
     # @return [Array<Integer>]
     # @raise [JRRToken::SpecialTokenError] with `special_tokens: :raise`
     def encode(text, special_tokens: :text)
-      text = text.to_s
+      text = utf8_text(text)
       _encode(text, allow_special?(text, special_tokens))
     end
 
@@ -324,7 +331,7 @@ module JRRToken
       raise TypeError, "max_tokens must be an Integer, got #{max_tokens.class}" unless max_tokens.is_a?(Integer)
       raise ArgumentError, "max_tokens must be non-negative, got #{max_tokens}" if max_tokens.negative?
 
-      text = text.to_s
+      text = utf8_text(text)
       _truncate(text, max_tokens, allow_special?(text, special_tokens))
     end
 
@@ -338,7 +345,7 @@ module JRRToken
     # @return [Array<String>]
     # @raise [JRRToken::SpecialTokenError] with `special_tokens: :raise`
     def split(text, special_tokens: :text)
-      text = text.to_s
+      text = utf8_text(text)
       _split(text, allow_special?(text, special_tokens))
     end
 
@@ -383,7 +390,32 @@ module JRRToken
     end
     alias to_s inspect
 
+    # Marshal support: a tokenizer is dumped as its encoding name and loads back as the
+    # shared instance, so it can live inside cached or marshaled objects.
+    def _dump(_level)
+      encoding
+    end
+
+    def self._load(encoding)
+      for_model(encoding)
+    end
+
     private
+
+    # Binary strings, and US-ASCII strings with non-ASCII bytes (File.read in a process with
+    # no locale, e.g. a Docker image without LANG), usually hold mislabeled UTF-8.
+    def utf8_text(text)
+      text = text.to_s
+      if text.encoding == Encoding::BINARY || (text.encoding == Encoding::US_ASCII && !text.ascii_only?)
+        utf8 = text.dup.force_encoding(Encoding::UTF_8)
+        return utf8 if utf8.valid_encoding?
+
+        raise ArgumentError, "invalid byte sequence in UTF-8 (#{text.encoding} text must contain UTF-8 bytes)"
+      end
+      raise ArgumentError, "invalid byte sequence in #{text.encoding}" unless text.valid_encoding?
+
+      text
+    end
 
     # Validates the `special_tokens:` mode, enforces :raise, and returns whether special
     # tokens should be encoded as such.
