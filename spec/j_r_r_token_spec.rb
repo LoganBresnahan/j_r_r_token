@@ -145,13 +145,19 @@ RSpec.describe JRRToken do
     end
 
     context "special tokens" do
-      it "counts <|endoftext|> as a single special token" do
-        expect(JRRToken::Tokenizer.count("<|endoftext|>", model: "gpt-4o")).to eq(1)
-        expect(JRRToken::Tokenizer.count("<|endoftext|>", model: "gpt-4")).to eq(1)
+      it "counts <|endoftext|> as plain text by default" do
+        expect(JRRToken::Tokenizer.count("<|endoftext|>", model: "gpt-4o")).to eq(7)
+        expect(JRRToken::Tokenizer.count("<|endoftext|>", model: "gpt-4")).to eq(7)
       end
 
-      it "counts o200k_harmony special tokens as single tokens" do
-        expect(JRRToken::Tokenizer.count("<|start|>", model: "gpt-oss-20b")).to eq(1)
+      it "counts <|endoftext|> as a single special token with special_tokens: :allow" do
+        expect(JRRToken::Tokenizer.count("<|endoftext|>", model: "gpt-4o", special_tokens: :allow)).to eq(1)
+        expect(JRRToken::Tokenizer.count("<|endoftext|>", model: "gpt-4", special_tokens: :allow)).to eq(1)
+      end
+
+      it "counts o200k_harmony special tokens as single tokens with special_tokens: :allow" do
+        expect(JRRToken::Tokenizer.count("<|start|>", model: "gpt-oss-20b")).to eq(5)
+        expect(JRRToken::Tokenizer.count("<|start|>", model: "gpt-oss-20b", special_tokens: :allow)).to eq(1)
       end
     end
 

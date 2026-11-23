@@ -1,6 +1,7 @@
 use std::{collections::HashSet, sync::OnceLock};
 
 use magnus::{function, method, prelude::*, Error, RString, Ruby};
+use regex::Regex;
 use tiktoken_rs::{
     bpe_for_tokenizer,
     tokenizer::{get_tokenizer, Tokenizer},
@@ -50,16 +51,36 @@ fn unsupported_model(ruby: &Ruby, model: &str) -> Error {
 // is noticeable for o200k_harmony (~1,100 special tokens).
 fn allowed_special(tokenizer: Tokenizer, bpe: &'static CoreBPE) -> &'static HashSet<&'static str> {
     static SETS: [OnceLock<HashSet<&'static str>>; 6] = [const { OnceLock::new() }; 6];
-    let index = match tokenizer {
+    SETS[cache_slot(tokenizer)].get_or_init(|| bpe.special_tokens())
+}
+
+// Matches any of the encoding's special tokens, for `special_tokens: :raise`. Built once
+// per encoding. Longest tokens come first so an overlapping match reports the full token.
+// (The regex crate compiles a literal alternation like this to an Aho-Corasick search.)
+fn special_token_regex(tokenizer: Tokenizer, bpe: &'static CoreBPE) -> &'static Regex {
+    static REGEXES: [OnceLock<Regex>; 6] = [const { OnceLock::new() }; 6];
+    REGEXES[cache_slot(tokenizer)].get_or_init(|| {
+        let mut tokens: Vec<&str> = allowed_special(tokenizer, bpe).iter().copied().collect();
+        tokens.sort_by(|a, b| b.len().cmp(&a.len()).then(a.cmp(b)));
+        let pattern = tokens
+            .iter()
+            .map(|token| regex::escape(token))
+            .collect::<Vec<_>>()
+            .join("|");
+        Regex::new(&pattern).expect("special token alternation is a valid regex")
+    })
+}
+
+// Per-encoding cache index. Gpt2 resolves to the same r50k_base singleton.
+fn cache_slot(tokenizer: Tokenizer) -> usize {
+    match tokenizer {
         Tokenizer::O200kHarmony => 0,
         Tokenizer::O200kBase => 1,
         Tokenizer::Cl100kBase => 2,
         Tokenizer::P50kBase => 3,
         Tokenizer::P50kEdit => 4,
-        // Gpt2 resolves to the same r50k_base singleton.
         Tokenizer::R50kBase | Tokenizer::Gpt2 => 5,
-    };
-    SETS[index].get_or_init(|| bpe.special_tokens())
+    }
 }
 
 /// A tokenizer for one encoding, exposed to Ruby as `JRRToken::Tokenizer`.
@@ -102,23 +123,91 @@ impl RbTokenizer {
         encoding_name(self.tokenizer)
     }
 
-    fn encode_ranks(&self, ruby: &Ruby, text: &str) -> Result<Vec<u32>, Error> {
+    // Encodes `text`. With `allow_special`, special-token strings (e.g. "<|endoftext|>")
+    // become their special token ids; otherwise they're encoded as ordinary text.
+    //
+    // Both paths use the fallible `CoreBPE::encode` (with an empty allowed set for plain
+    // text) rather than `encode_with_special_tokens` / `encode_ordinary`, which unwrap
+    // tokenizer regex failures and would panic (Ruby `fatal`) on pathological input.
+    fn encode_ranks(&self, ruby: &Ruby, text: &str, allow_special: bool) -> Result<Vec<u32>, Error> {
         let bpe = self.bpe(ruby)?;
-        // `encode` (unlike `encode_with_special_tokens`) reports tokenizer regex failures
-        // as an error instead of panicking, so Ruby gets a RuntimeError rather than `fatal`.
-        bpe.encode(text, allowed_special(self.tokenizer, bpe))
+        let none = HashSet::new();
+        let allowed = if allow_special {
+            allowed_special(self.tokenizer, bpe)
+        } else {
+            &none
+        };
+        bpe.encode(text, allowed)
             .map(|(tokens, _)| tokens)
             .map_err(|e| Error::new(ruby.exception_runtime_error(), e.to_string()))
     }
 
-    // `Tokenizer#_count(text)`
-    fn count(ruby: &Ruby, rb_self: &Self, text: String) -> Result<usize, Error> {
-        rb_self.encode_ranks(ruby, &text).map(|tokens| tokens.len())
+    // `Tokenizer#_count(text, allow_special)`
+    fn count(ruby: &Ruby, rb_self: &Self, text: String, allow_special: bool) -> Result<usize, Error> {
+        rb_self.encode_ranks(ruby, &text, allow_special).map(|tokens| tokens.len())
     }
 
-    // `Tokenizer#_encode(text)`
-    fn encode(ruby: &Ruby, rb_self: &Self, text: String) -> Result<Vec<u32>, Error> {
-        rb_self.encode_ranks(ruby, &text)
+    // `Tokenizer#_encode(text, allow_special)`
+    fn encode(
+        ruby: &Ruby,
+        rb_self: &Self,
+        text: String,
+        allow_special: bool,
+    ) -> Result<Vec<u32>, Error> {
+        rb_self.encode_ranks(ruby, &text, allow_special)
+    }
+
+    // `Tokenizer#_find_special(text)`: the first special-token string in `text`, or nil.
+    fn find_special(ruby: &Ruby, rb_self: &Self, text: String) -> Result<Option<String>, Error> {
+        let bpe = rb_self.bpe(ruby)?;
+        Ok(special_token_regex(rb_self.tokenizer, bpe)
+            .find(&text)
+            .map(|m| m.as_str().to_owned()))
+    }
+
+    // `Tokenizer#_truncate(text, max_tokens, allow_special)`: `text` cut at a token
+    // boundary, i.e. the text of the first `max_tokens` tokens of its encoding (the
+    // `decode(encode(text)[..n])` idiom). This is not necessarily the longest prefix that
+    // fits: a slightly longer prefix can sometimes re-encode within budget, but finding it
+    // would need a character-level search (token count isn't monotonic in prefix length).
+    // Cost is one full encode of `text`, plus a re-encode of the result.
+    //
+    // Decoding the first `max_tokens` tokens yields a byte prefix of `text`; if the cut
+    // lands inside a multi-byte character, the partial character is dropped so the result
+    // is valid UTF-8. BPE boundaries can shift when a prefix is re-encoded, so the result
+    // is re-counted and shortened one token at a time until it fits; this guarantees
+    // `count(result) <= max_tokens`. It's almost always a single pass.
+    fn truncate(
+        ruby: &Ruby,
+        rb_self: &Self,
+        text: String,
+        max_tokens: usize,
+        allow_special: bool,
+    ) -> Result<String, Error> {
+        let tokens = rb_self.encode_ranks(ruby, &text, allow_special)?;
+        if tokens.len() <= max_tokens {
+            return Ok(text);
+        }
+        let mut keep = max_tokens;
+        loop {
+            let bytes = rb_self.decode_to_bytes(ruby, &tokens[..keep])?;
+            let valid_len = match std::str::from_utf8(&bytes) {
+                Ok(_) => bytes.len(),
+                Err(e) => e.valid_up_to(),
+            };
+            // A prefix of the decoded token bytes is a prefix of `text` (tokens concatenate
+            // to the original bytes), so slicing `text` keeps the caller's exact characters.
+            let prefix = text.get(..valid_len).ok_or_else(|| {
+                Error::new(
+                    ruby.exception_runtime_error(),
+                    "truncate: decoded tokens are not a prefix of the input text",
+                )
+            })?;
+            if keep == 0 || rb_self.encode_ranks(ruby, prefix, allow_special)?.len() <= max_tokens {
+                return Ok(prefix.to_owned());
+            }
+            keep -= 1;
+        }
     }
 
     fn decode_to_bytes(&self, ruby: &Ruby, tokens: &[u32]) -> Result<Vec<u8>, Error> {
@@ -162,8 +251,10 @@ fn init(ruby: &Ruby) -> Result<(), Error> {
     class.undef_default_alloc_func();
     class.define_singleton_method("_build", function!(RbTokenizer::build, 1))?;
     class.define_singleton_method("_encoding_for", function!(encoding_for, 1))?;
-    class.define_private_method("_count", method!(RbTokenizer::count, 1))?;
-    class.define_private_method("_encode", method!(RbTokenizer::encode, 1))?;
+    class.define_private_method("_count", method!(RbTokenizer::count, 2))?;
+    class.define_private_method("_encode", method!(RbTokenizer::encode, 2))?;
+    class.define_private_method("_find_special", method!(RbTokenizer::find_special, 1))?;
+    class.define_private_method("_truncate", method!(RbTokenizer::truncate, 3))?;
     class.define_private_method("_decode", method!(RbTokenizer::decode, 1))?;
     class.define_private_method("_decode_bytes", method!(RbTokenizer::decode_bytes, 1))?;
     Ok(())

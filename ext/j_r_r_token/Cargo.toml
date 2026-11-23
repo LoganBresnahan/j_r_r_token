@@ -11,3 +11,4 @@ crate-type = ["cdylib"]
 [dependencies]
 magnus = "0.8.5"
 tiktoken-rs = "0.12.1"
+regex = "1.13"

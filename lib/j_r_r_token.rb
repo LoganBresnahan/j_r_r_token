@@ -16,6 +16,10 @@ end
 module JRRToken
   class Error < StandardError; end
 
+  # Raised with `special_tokens: :raise` when the text contains a special-token string
+  # such as "<|endoftext|>".
+  class SpecialTokenError < ArgumentError; end
+
   # A tokenizer for one encoding (e.g. o200k_base). The class itself is defined by the
   # native extension; this file adds the public Ruby interface.
   #
@@ -27,8 +31,18 @@ module JRRToken
   # Every instance method also has a class-level shortcut that takes `model:`:
   #
   #   JRRToken::Tokenizer.count("hello world", model: "gpt-4o")  # => 2
+  #
+  # == Special tokens
+  #
+  # `count`, `encode` and `truncate` take `special_tokens:`, which controls what happens
+  # when the text contains a special-token string such as "<|endoftext|>":
+  #
+  # - `:text` (default): treat it as ordinary text. Right for user-supplied input.
+  # - `:allow`: encode it as the single special token.
+  # - `:raise`: raise JRRToken::SpecialTokenError.
   class Tokenizer
     ENCODINGS = %w[o200k_harmony o200k_base cl100k_base p50k_base p50k_edit r50k_base].freeze
+    SPECIAL_TOKEN_MODES = %i[text allow raise].freeze
 
     # One shared, frozen instance per encoding. Instances only hold the encoding; the
     # tokenizer data itself is built lazily on first use and cached process-wide.
@@ -54,13 +68,18 @@ module JRRToken
       end
 
       # @return [Integer] the number of tokens in `text`
-      def count(text, model:)
-        for_model(model).count(text)
+      def count(text, model:, special_tokens: :text)
+        for_model(model).count(text, special_tokens: special_tokens)
       end
 
       # @return [Array<Integer>] the token ids for `text`
-      def encode(text, model:)
-        for_model(model).encode(text)
+      def encode(text, model:, special_tokens: :text)
+        for_model(model).encode(text, special_tokens: special_tokens)
+      end
+
+      # @return [String] `text` cut at a token boundary to fit `max_tokens` tokens
+      def truncate(text, max_tokens:, model:, special_tokens: :text)
+        for_model(model).truncate(text, max_tokens: max_tokens, special_tokens: special_tokens)
       end
 
       # @return [String] the text for the token ids
@@ -79,16 +98,41 @@ module JRRToken
 
     # Counts the tokens in `text` (converted with #to_s).
     #
+    # @param special_tokens [Symbol] :text (default), :allow or :raise; see the class docs
     # @return [Integer]
-    def count(text)
-      _count(text.to_s)
+    # @raise [JRRToken::SpecialTokenError] with `special_tokens: :raise`
+    def count(text, special_tokens: :text)
+      text = text.to_s
+      _count(text, allow_special?(text, special_tokens))
     end
 
     # Encodes `text` (converted with #to_s) into token ids.
     #
+    # @param special_tokens [Symbol] :text (default), :allow or :raise; see the class docs
     # @return [Array<Integer>]
-    def encode(text)
-      _encode(text.to_s)
+    # @raise [JRRToken::SpecialTokenError] with `special_tokens: :raise`
+    def encode(text, special_tokens: :text)
+      text = text.to_s
+      _encode(text, allow_special?(text, special_tokens))
+    end
+
+    # Returns `text` (converted with #to_s) cut at a token boundary: the text of its first
+    # `max_tokens` tokens (fewer if needed to stay within budget), dropping a trailing
+    # character the cut would split. The result is always a prefix of the input, valid
+    # UTF-8, and `count(result, special_tokens:)` is at most `max_tokens`. Text that
+    # already fits is returned unchanged. It is not necessarily the longest prefix that
+    # fits. Runs in time linear in the length of `text` (one full encode).
+    #
+    # @param max_tokens [Integer] a non-negative token budget
+    # @param special_tokens [Symbol] :text (default), :allow or :raise; see the class docs
+    # @return [String]
+    # @raise [JRRToken::SpecialTokenError] with `special_tokens: :raise`
+    def truncate(text, max_tokens:, special_tokens: :text)
+      raise TypeError, "max_tokens must be an Integer, got #{max_tokens.class}" unless max_tokens.is_a?(Integer)
+      raise ArgumentError, "max_tokens must be non-negative, got #{max_tokens}" if max_tokens.negative?
+
+      text = text.to_s
+      _truncate(text, max_tokens, allow_special?(text, special_tokens))
     end
 
     # Decodes token ids back into text. Bytes that don't form valid UTF-8 (for example,
@@ -133,6 +177,25 @@ module JRRToken
     alias to_s inspect
 
     private
+
+    # Validates the `special_tokens:` mode, enforces :raise, and returns whether special
+    # tokens should be encoded as such.
+    def allow_special?(text, mode)
+      unless SPECIAL_TOKEN_MODES.include?(mode)
+        raise ArgumentError, "special_tokens must be one of :text, :allow or :raise, got #{mode.inspect}"
+      end
+
+      if mode == :raise
+        token = _find_special(text)
+        if token
+          raise SpecialTokenError,
+                "Text contains the special token #{token.inspect}. Pass special_tokens: :text " \
+                "to treat it as plain text, or special_tokens: :allow to encode it as a special token."
+        end
+      end
+
+      mode == :allow
+    end
 
     def token_ids(tokens)
       array = Array.try_convert(tokens)
