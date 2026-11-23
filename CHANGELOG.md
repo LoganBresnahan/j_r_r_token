@@ -6,7 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Breaking Change
+- Model mapping now matches OpenAI's tiktoken 0.14.0 exactly (via `tiktoken-rs` 0.12.1). `tiktoken-rs` 0.11 carried its own extra `o4` / `o4-*` mappings that OpenAI's tiktoken never had (it only maps `o4-mini`); 0.12 dropped them, so bare `o4` and `o4-pro` (any `o4-*` other than `o4-mini*`) now raise `ArgumentError`, as do fine-tunes of them (e.g. `ft:o4`). Use `o4-mini` or pass `o200k_base` directly.
+
+### Fix
+- A whitespace run of ~1M+ characters followed by text previously killed the process with an uncatchable `fatal` (a Rust panic). It now raises a regular `RuntimeError` ("Could not encode string: ..."), so apps counting untrusted input can rescue it.
+
 ### Change
+- Bumped `tiktoken-rs` from 0.11.0 to 0.12.1, which vendors OpenAI's tiktoken 0.14.0 core.
+- Following OpenAI's tiktoken 0.14.0, any model name beginning with `gpt-5` now resolves to `o200k_base` (previously only `gpt-5`, `gpt-5-*` and `gpt-5.*`).
+- Long repetitive input no longer hits a quadratic slowdown: upstream's large-piece BPE merge brings 200 KB of `"a"` from ~15 s to well under a second. Counts are unchanged (verified against 0.11.0 across all encodings).
+- The allowed special-token set is now built once per encoding instead of on every call; repeat `gpt-oss` (`o200k_harmony`, ~1,100 special tokens) counts are now on par with the other encodings.
+- Building from source (the generic gem or `rake compile`) now requires Rust 1.85 or newer. Precompiled platform gems are unaffected.
 - Tokenizers are now built once per process and cached (via `tiktoken_rs::bpe_for_tokenizer`) instead of being rebuilt on every `count` call. Previously each call decoded the full vocabulary and compiled the tokenizer regexes, costing ~20–120 ms per call depending on the encoding; repeat calls are now sub-millisecond for short text. The first call for each encoding still pays the one-time build cost.
 - Memory tradeoff: each encoding, once used, now stays resident for the life of the process. Approximate RSS per encoding: `o200k_base` ~45 MB, `o200k_harmony` ~47 MB, `cl100k_base` ~24 MB, `p50k_base` / `p50k_edit` / `r50k_base` ~10 MB each. Only encodings you actually call are loaded.
 - Bumped `magnus` from 0.8.2 to 0.8.5 (patch fixes). Staying on the 0.8 series, the last to support Ruby 3.0.

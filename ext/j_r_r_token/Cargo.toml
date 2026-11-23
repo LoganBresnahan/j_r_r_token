@@ -10,4 +10,4 @@ crate-type = ["cdylib"]
 
 [dependencies]
 magnus = "0.8.5"
-tiktoken-rs = { version = "0.11" }
+tiktoken-rs = "0.12.1"

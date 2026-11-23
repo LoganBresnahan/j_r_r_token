@@ -30,7 +30,8 @@ RSpec.describe JRRToken do
         "ft:gpt-4o",
         "ft:gpt-4o:org:model:123",
         "ft:gpt-5:org:model",
-        "o1", "o1-preview", "o3", "o3-mini", "o4-mini",
+        "o1", "o1-preview", "o3", "o3-mini", "o4-mini", "o4-mini-2025-04-16",
+        "gpt-5.4-mini", "gpt-5.2-codex",
         "codex-mini", "codex-mini-latest"
       ]
 
@@ -132,6 +133,40 @@ RSpec.describe JRRToken do
       end
     end
 
+    context "model mapping synced with upstream tiktoken 0.14.0" do
+      # tiktoken-rs 0.11 mapped bare "o4" / "o4-*" itself; OpenAI tiktoken only ever maps
+      # o4-mini, and tiktoken-rs 0.12 dropped the extras to match it.
+      ["o4", "o4-pro"].each do |model|
+        it "raises an ArgumentError for '#{model}'" do
+          expect { JRRToken::Tokenizer.count(SIMPLE_TEXT, model: model) }
+            .to raise_error(ArgumentError, "Model '#{model}' not supported.")
+        end
+      end
+    end
+
+    context "special tokens" do
+      it "counts <|endoftext|> as a single special token" do
+        expect(JRRToken::Tokenizer.count("<|endoftext|>", model: "gpt-4o")).to eq(1)
+        expect(JRRToken::Tokenizer.count("<|endoftext|>", model: "gpt-4")).to eq(1)
+      end
+
+      it "counts o200k_harmony special tokens as single tokens" do
+        expect(JRRToken::Tokenizer.count("<|start|>", model: "gpt-oss-20b")).to eq(1)
+      end
+    end
+
+    context "long repetitive input" do
+      # Regression guard for upstream's large-piece BPE merge (tiktoken-rs 0.12):
+      # with the old quadratic merge, 200 KB of "a" took ~15 s.
+      it "counts a 200 KB single-character run" do
+        expect(JRRToken::Tokenizer.count("a" * 200_000, model: "gpt-4o")).to eq(25_000)
+      end
+
+      it "counts a 200 KB two-character run" do
+        expect(JRRToken::Tokenizer.count("ab" * 100_000, model: "r50k_base")).to eq(100_000)
+      end
+    end
+
     context "tokenizer caching" do
       it "returns stable counts across repeated calls and interleaved encodings" do
         models = ["gpt-4o", "gpt-4", "text-davinci-003", "gpt-oss-20b", "gpt2"]
@@ -182,6 +217,14 @@ RSpec.describe JRRToken do
 
       it "handles non-string text input by calling .to_s" do
         expect(JRRToken::Tokenizer.count(123, model: "gpt-4")).to eq(1)
+      end
+
+      # A ~1M-character whitespace run followed by text exceeds fancy-regex's stack limit.
+      # Before tiktoken-rs 0.12 this panicked and killed the process with an uncatchable
+      # `fatal`; it must now surface as a regular, rescuable RuntimeError.
+      it "raises a RuntimeError (not fatal) when the tokenizer regex fails" do
+        expect { JRRToken::Tokenizer.count(" " * 1_000_000 + "x", model: "gpt-4o") }
+          .to raise_error(RuntimeError, /Could not encode string/)
       end
     end
   end
