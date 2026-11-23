@@ -157,6 +157,27 @@ impl RbTokenizer {
         rb_self.encode_ranks(ruby, &text, allow_special)
     }
 
+    // `Tokenizer#_split(text, allow_special)`: the text of each token, 1:1 with `encode`.
+    // Bytes of a multi-byte character split across tokens (common for emoji and CJK) can't
+    // be shown on their own, so they become U+FFFD; use encode + decode_bytes for exact
+    // bytes.
+    fn split(
+        ruby: &Ruby,
+        rb_self: &Self,
+        text: String,
+        allow_special: bool,
+    ) -> Result<Vec<String>, Error> {
+        let tokens = rb_self.encode_ranks(ruby, &text, allow_special)?;
+        tokens
+            .iter()
+            .map(|token| {
+                rb_self
+                    .decode_to_bytes(ruby, std::slice::from_ref(token))
+                    .map(|bytes| String::from_utf8_lossy(&bytes).into_owned())
+            })
+            .collect()
+    }
+
     // `Tokenizer#_find_special(text)`: the first special-token string in `text`, or nil.
     fn find_special(ruby: &Ruby, rb_self: &Self, text: String) -> Result<Option<String>, Error> {
         let bpe = rb_self.bpe(ruby)?;
@@ -235,6 +256,12 @@ impl RbTokenizer {
     }
 }
 
+// `JRRToken.context_size(model)`: the model's context window in tokens, from tiktoken-rs's
+// model table, or nil if the model isn't in it. Accepts `ft:` fine-tune names.
+fn context_size(model: String) -> Option<usize> {
+    tiktoken_rs::model::get_context_size(&model)
+}
+
 // `Tokenizer._encoding_for(model)`: resolves a model or encoding name to the canonical
 // encoding name, raising ArgumentError for unsupported models.
 fn encoding_for(ruby: &Ruby, model: String) -> Result<&'static str, Error> {
@@ -246,6 +273,7 @@ fn encoding_for(ruby: &Ruby, model: String) -> Result<&'static str, Error> {
 #[magnus::init]
 fn init(ruby: &Ruby) -> Result<(), Error> {
     let module = ruby.define_module("JRRToken")?;
+    module.define_singleton_method("context_size", function!(context_size, 1))?;
     let class = module.define_class("Tokenizer", ruby.class_object())?;
     // Instances are only created through `_build` (and handed out by `for_model`).
     class.undef_default_alloc_func();
@@ -255,6 +283,7 @@ fn init(ruby: &Ruby) -> Result<(), Error> {
     class.define_private_method("_encode", method!(RbTokenizer::encode, 2))?;
     class.define_private_method("_find_special", method!(RbTokenizer::find_special, 1))?;
     class.define_private_method("_truncate", method!(RbTokenizer::truncate, 3))?;
+    class.define_private_method("_split", method!(RbTokenizer::split, 2))?;
     class.define_private_method("_decode", method!(RbTokenizer::decode, 1))?;
     class.define_private_method("_decode_bytes", method!(RbTokenizer::decode_bytes, 1))?;
     Ok(())

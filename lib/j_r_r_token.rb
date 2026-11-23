@@ -16,6 +16,19 @@ end
 module JRRToken
   class Error < StandardError; end
 
+  # @!method self.context_size(model)
+  #   The model's context window in tokens (e.g. 128_000 for "gpt-4o"), or nil if the
+  #   model isn't in tiktoken-rs's table. Fine-tuned names ("ft:gpt-4o:org:name:id")
+  #   resolve to their base model. Defined by the native extension.
+  #
+  #   Values come from tiktoken-rs's prefix-matched table as-is, so they can be stale or
+  #   loose (e.g. bare "gpt-4-turbo" reports 8,192, "davinci-002" 2,049), and a name can
+  #   have a context size without having a tokenizer (e.g. "gpt-6", "o4").
+  #
+  #   @param model [String]
+  #   @return [Integer, nil]
+  #   @raise [TypeError] if model is not a String
+
   # Raised with `special_tokens: :raise` when the text contains a special-token string
   # such as "<|endoftext|>".
   class SpecialTokenError < ArgumentError; end
@@ -82,6 +95,11 @@ module JRRToken
         for_model(model).truncate(text, max_tokens: max_tokens, special_tokens: special_tokens)
       end
 
+      # @return [Array<String>] the text of each token in `text`
+      def split(text, model:, special_tokens: :text)
+        for_model(model).split(text, special_tokens: special_tokens)
+      end
+
       # @return [String] the text for the token ids
       def decode(tokens, model:)
         for_model(model).decode(tokens)
@@ -133,6 +151,20 @@ module JRRToken
 
       text = text.to_s
       _truncate(text, max_tokens, allow_special?(text, special_tokens))
+    end
+
+    # Splits `text` (converted with #to_s) into the text of each of its tokens, e.g.
+    # "hello world" -> ["hello", " world"]. Pieces stay 1:1 with #encode's ids. Bytes of a
+    # multi-byte character split across tokens (common for emoji and CJK) are shown as
+    # U+FFFD, so joining the pieces doesn't always reproduce `text`; for exact bytes, use
+    # `encode(text).map { |id| decode_bytes([id]) }`.
+    #
+    # @param special_tokens [Symbol] :text (default), :allow or :raise; see the class docs
+    # @return [Array<String>]
+    # @raise [JRRToken::SpecialTokenError] with `special_tokens: :raise`
+    def split(text, special_tokens: :text)
+      text = text.to_s
+      _split(text, allow_special?(text, special_tokens))
     end
 
     # Decodes token ids back into text. Bytes that don't form valid UTF-8 (for example,
