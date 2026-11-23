@@ -1,4 +1,15 @@
 module JRRToken
   VERSION: String
-  # See the writing guide of rbs: https://github.com/ruby/rbs#guides
+
+  # Native extension entry point (implemented in Rust).
+  def self.count_tokens: (String model, String text) -> Integer
+
+  class Error < StandardError
+  end
+
+  class Tokenizer
+    # Counts tokens in `text` (converted with #to_s) for the given model or encoding name.
+    # Raises ArgumentError for an unsupported model, RuntimeError if tokenization fails.
+    def self.count: (_ToS text, model: String) -> Integer
+  end
 end

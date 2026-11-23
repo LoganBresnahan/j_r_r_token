@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+---
+## [1.3.0] - 2026-11-22
 ### Breaking Change
 - Model mapping now matches OpenAI's tiktoken 0.14.0 exactly (via `tiktoken-rs` 0.12.1). `tiktoken-rs` 0.11 carried its own extra `o4` / `o4-*` mappings that OpenAI's tiktoken never had (it only maps `o4-mini`); 0.12 dropped them, so bare `o4` and `o4-pro` (any `o4-*` other than `o4-mini*`) now raise `ArgumentError`, as do fine-tunes of them (e.g. `ft:o4`). Use `o4-mini` or pass `o200k_base` directly.
 
@@ -22,6 +25,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Memory tradeoff: each encoding, once used, now stays resident for the life of the process. Approximate RSS per encoding: `o200k_base` ~45 MB, `o200k_harmony` ~47 MB, `cl100k_base` ~24 MB, `p50k_base` / `p50k_edit` / `r50k_base` ~10 MB each. Only encodings you actually call are loaded.
 - Bumped `magnus` from 0.8.2 to 0.8.5 (patch fixes). Staying on the 0.8 series, the last to support Ruby 3.0.
 - Migrated the extension off magnus's deprecated "old-api" (global `define_module` / `exception::*`) to the `&Ruby` handle API and dropped the `old-api` feature flag. No behavior change.
+- Bumped `rb_sys` (gem and crate) from 0.9.128 to 0.9.130. It still pins `rake-compiler-dock` 1.12.0, so Ruby 3.0 platform gems are unaffected.
+- README: documented the `RuntimeError` case, the one-time build cost and memory per encoding (with a boot-time warm-up tip for preforking servers), and the Rust >= 1.85 requirement for source builds.
+- Gemspec description now lists `o200k_harmony`; added RBS signatures for `JRRToken::Tokenizer.count`.
 
 ---
 ## [1.2.1] - 2026-05-13
