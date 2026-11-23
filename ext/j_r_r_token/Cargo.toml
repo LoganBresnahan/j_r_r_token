@@ -9,5 +9,5 @@ publish = false
 crate-type = ["cdylib"]
 
 [dependencies]
-magnus = { version = "0.8", features = ["old-api"] }
+magnus = "0.8.5"
 tiktoken-rs = { version = "0.11" }

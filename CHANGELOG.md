@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Change
 - Tokenizers are now built once per process and cached (via `tiktoken_rs::bpe_for_tokenizer`) instead of being rebuilt on every `count` call. Previously each call decoded the full vocabulary and compiled the tokenizer regexes, costing ~20–120 ms per call depending on the encoding; repeat calls are now sub-millisecond for short text. The first call for each encoding still pays the one-time build cost.
 - Memory tradeoff: each encoding, once used, now stays resident for the life of the process. Approximate RSS per encoding: `o200k_base` ~45 MB, `o200k_harmony` ~47 MB, `cl100k_base` ~24 MB, `p50k_base` / `p50k_edit` / `r50k_base` ~10 MB each. Only encodings you actually call are loaded.
+- Bumped `magnus` from 0.8.2 to 0.8.5 (patch fixes). Staying on the 0.8 series, the last to support Ruby 3.0.
+- Migrated the extension off magnus's deprecated "old-api" (global `define_module` / `exception::*`) to the `&Ruby` handle API and dropped the `old-api` feature flag. No behavior change.
 
 ---
 ## [1.2.1] - 2026-05-13

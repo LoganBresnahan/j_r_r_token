@@ -1,4 +1,4 @@
-use magnus::{define_module, exception, function, Error};
+use magnus::{function, Error, Ruby};
 use tiktoken_rs::{
     bpe_for_tokenizer,
     tokenizer::{get_tokenizer, Tokenizer},
@@ -23,10 +23,10 @@ fn tokenizer_for(model: &str) -> Option<Tokenizer> {
 }
 
 // This function is exposed to Ruby.
-fn count_tokens(model: String, text: String) -> Result<usize, Error> {
+fn count_tokens(ruby: &Ruby, model: String, text: String) -> Result<usize, Error> {
     let tokenizer = tokenizer_for(&model).ok_or_else(|| {
         Error::new(
-            exception::arg_error(),
+            ruby.exception_arg_error(),
             format!("Model '{}' not supported.", model),
         )
     })?;
@@ -36,14 +36,14 @@ fn count_tokens(model: String, text: String) -> Result<usize, Error> {
     // every call. It currently never returns `Err` (a failed build panics inside
     // tiktoken-rs's lazy static); the `map_err` only guards against future changes.
     let bpe = bpe_for_tokenizer(tokenizer)
-        .map_err(|e| Error::new(exception::runtime_error(), e.to_string()))?;
+        .map_err(|e| Error::new(ruby.exception_runtime_error(), e.to_string()))?;
 
     Ok(bpe.count_with_special_tokens(&text))
 }
 
 #[magnus::init]
-fn init() -> Result<(), Error> {
-    let module = define_module("JRRToken")?;
+fn init(ruby: &Ruby) -> Result<(), Error> {
+    let module = ruby.define_module("JRRToken")?;
     module.define_module_function("count_tokens", function!(count_tokens, 2))?;
     Ok(())
 }
